@@ -1,0 +1,73 @@
+[project]
+name = "geo-explorer"
+version = "0.0.1"
+description = "Civic Interconnect GeoExplorer"
+authors = [
+    { name="Civic Interconnect", email="info@civic-interconnect.org" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "loguru",
+    "python-dotenv",
+    "PyYAML",
+    "typer[all]",
+    "rich",
+    "civic-lib-core @ git+https://github.com/civic-interconnect/civic-lib-core.git@main",
+    "requests",
+    "gql[aiohttp]",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mkdocs",
+  "mkdocs-material",
+  "pre-commit",
+  "pytest",
+  "pytest-asyncio",
+  "pytest-cov",
+  "ruff",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/civic-interconnect/geo-explorer"
+"Source" = "https://github.com/civic-interconnect/geo-explorer"
+
+[project.scripts]
+civic-dev = "civic_dev.cli:app"
+geo-explorer = "geo-explorer.cli.cli:app"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+license-files = ["LICENSE"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["data/*", "docs/data/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+fix = true
+unsafe-fixes = true
+preview = true
+
+[tool.ruff.lint]
+extend-select = ["E", "F", "W", "I", "UP", "C90", "N", "B", "A", "SIM"]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra --strict-markers"
+testpaths = [
+  "tests"
+]
+python_files = "test_*.py"

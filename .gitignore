@@ -1,0 +1,67 @@
+# This .gitignore file lists content that does NOT need to be tracked in the project history
+
+# ----------------------------------------
+# macOS system files (always ignore)
+# ----------------------------------------
+.DS_Store
+
+# ----------------------------------------
+# Visual Studio Code (always ignore)
+# ----------------------------------------
+.vscode/
+
+# ----------------------------------------
+# Environment variables and secrets (always ignore)
+# ----------------------------------------
+.env
+.env.*
+
+# ----------------------------------------
+# Python (ignore for all Python projects)
+# ----------------------------------------
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+build/
+dist/
+.ruff_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ----------------------------------------
+# Logs (runtime generated)
+# ----------------------------------------
+logs/
+
+# ----------------------------------------
+# Storage (runtime pulled data snapshots)
+# ----------------------------------------
+storage/
+
+# ----------------------------------------
+# General temp / system files
+# ----------------------------------------
+*.swp
+*.bak
+*.tmp
+*.log
+tmp/
+.github/workflows/__pycache__/
+
+
+# ----------------------------------------
+# Ignore raw GIS data
+# ----------------------------------------
+data/**/*.zip
+data/**/*.shp
+data/**/*.dbf
+data/**/*.shx
+
+docs/data/**/*.zip
+docs/data/**/*.shp
+docs/data/**/*.dbf
+docs/data/**/*.shx
+/docs/data/nat/states.g
