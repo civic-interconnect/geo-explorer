@@ -1,9 +1,11 @@
 import { STATE_LIST } from "./list-us-states.js";
 import { config } from "./config.js";
 
-export function generateStateLayers() {
-  const groupConfig = config.groups["us-states"];
+export function generateCD118Layers() {
+  // Grab the config for the us-congress group
+  const groupConfig = config.groups["us-congress"];
 
+  // Read dynamic settings from config
   const baseUrl = groupConfig.baseUrl;
   const style = groupConfig.style;
   const idProp = groupConfig.idProp;
@@ -20,7 +22,7 @@ export function generateStateLayers() {
 
     layers[state] = {
       label: stateLabel,
-      url: `${baseUrl}/${state}/state.geojson`,
+      url: `${baseUrl}/${state}/cd118_${state}.geojson`,
       type,
       style,
       idProp,
@@ -31,5 +33,5 @@ export function generateStateLayers() {
   return layers;
 }
 
-// Dynamically populate config:
-config.groups["us-states"].layers = generateStateLayers();
+// Inject dynamically
+config.groups["us-congress"].layers = generateCD118Layers();

@@ -4,6 +4,7 @@ import "https://civic-interconnect.github.io/app-core/components/ci-footer/ci-fo
 import { config } from "./config.js";
 import { generateStateLayers } from "./layer-states.js";
 import { generateCountyLayers } from "./layer-counties.js";
+import { generateCD118Layers } from "./layer-cd118.js";
 import { populateViews, createSlotSpan } from "./ui-utils.js";
 import "./map-viewer.js";
 
@@ -12,11 +13,16 @@ const layerSelect = document.getElementById("layer-select");
 const featureSelect = document.getElementById("feature-select");
 const featureContainer = document.getElementById("feature-container");
 const mapViewer = document.querySelector("map-viewer");
-
-config.groups["us-states"].layers = generateStateLayers();
-config.groups["us-counties"].layers = generateCountyLayers();
-
 let selectedState = null;
+if (config.groups["us-states"]) {
+  config.groups["us-states"].layers = generateStateLayers();
+}
+if (config.groups["us-counties"]) {
+  config.groups["us-counties"].layers = generateCountyLayers();
+}
+if (config.groups["us-congress"]) {
+  config.groups["us-congress"].layers = generateCD118Layers();
+}
 
 viewSelect.addEventListener("change", (e) => {
   const selectedKey = e.target.value;

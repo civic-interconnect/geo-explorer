@@ -2,8 +2,15 @@ import { STATE_LIST } from "./list-us-states.js";
 import { config } from "./config.js";
 
 export function generateCountyLayers() {
-  const baseUrl =
-    "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us/main/data-out/states";
+  // Grab the config for counties:
+  const groupConfig = config.groups["us-counties"];
+
+  // Pull dynamic settings from config:
+  const baseUrl = groupConfig.baseUrl;
+  const style = groupConfig.style;
+  const idProp = groupConfig.idProp;
+  const nameProp = groupConfig.nameProp;
+  const type = groupConfig.type || "geojson";
 
   const layers = {};
 
@@ -16,15 +23,15 @@ export function generateCountyLayers() {
     layers[state] = {
       label: stateLabel,
       url: `${baseUrl}/${state}/counties.geojson`,
-      type: "geojson",
-      style: { color: "#2b3a67" },
-      idProp: "STATEFP",
-      nameProp: "NAME",
+      type,
+      style,
+      idProp,
+      nameProp,
     };
   }
 
   return layers;
 }
 
-// Inject dynamically
+// Inject dynamically:
 config.groups["us-counties"].layers = generateCountyLayers();

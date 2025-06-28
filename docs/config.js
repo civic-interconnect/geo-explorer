@@ -3,32 +3,32 @@ export const config = {
     "us-states": {
       label: "US States",
       style: { color: "#2b3a67" },
+      file: "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us/main/data-out/national/states.geojson",
+      baseUrl:
+        "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us/main/data-out/states",
       idProp: "STATEFP",
       nameProp: "NAME",
-      layers: {} // dynamically injected
+      layers: {}
     },
     "us-counties": {
       label: "US Counties",
       style: { color: "#007acc" },
+      file: "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us/main/data-out/national/counties.geojson",
+      baseUrl:
+        "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us/main/data-out/states",
       idProp: "COUNTYFP",
       nameProp: "NAME",
-      layers: {} // dynamically injected
+      layers: {}
     },
     "us-congress": {
       label: "Congressional Districts",
-      file: "./data/congress/us-house-118.geojson",
-      count: 435,
-      style: { color: "#800000" },
-      idProp: "CD_ID",
-      nameProp: "CD_NAME",
-    },
-    "us-ocd": {
-      label: "Official Civic Divisions",
-      file: "./data/ocd/ocd-boundaries.geojson",
-      count: 3000,
-      style: { color: "#555" },
-      idProp: "COUNTYFP",
-      nameProp: "NAME",
+      style: { color: "#d62728" },
+      file: "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us-cd118/main/data-out/national/cd118_us.geojson",
+      baseUrl:
+        "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us-cd118/main/data-out/states",
+      idProp: "CD118FP",
+      nameProp: "NAMELSAD",
+      layers: {}
     },
   },
 };
