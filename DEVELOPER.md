@@ -31,8 +31,8 @@ After verifying changes,
 ```powershell
 git pull
 git add .
-git commit -m "Release v0.0.1"
-git tag v0.0.1
+git commit -m "Release v0.0.2"
+git tag v0.0.2
 git push origin main
-git push origin v0.0.1
+git push origin v0.0.2
 ```
