@@ -1,3 +1,6 @@
+// app/config.js
+// This file defines the configuration for US geographic boundaries, including states, counties, and congressional districts.
+
 export const config = {
   groups: {
     "us-states": {
@@ -27,7 +30,7 @@ export const config = {
       baseUrl:
         "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us-cd118/main/data-out/states",
       idProp: "CD118FP",
-      nameProp: "NAMELSAD",
+      nameProp: "NAMELSAD20",
       layers: {}
     },
   },

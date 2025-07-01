@@ -1,4 +1,4 @@
-// map-viewer.js
+// app/map-viewer.js
 // Custom Web Component for displaying GeoJSON on a Leaflet map
 
 export default class MapViewer extends HTMLElement {
@@ -17,7 +17,7 @@ export default class MapViewer extends HTMLElement {
     container.id = "map-container";
     container.style.width = "100%";
     container.style.height = "100%";
-    container.style.minHeight = "400px";
+    container.style.minHeight = "600px";
     this.shadowRoot.appendChild(container);
   }
 
@@ -75,39 +75,46 @@ export default class MapViewer extends HTMLElement {
       const geojson = await response.json();
       console.log("GeoJSON loaded, features count:", geojson.features.length);
 
-      // Extract id and name from each feature
-      const styledGeoJSON = {
-        ...geojson,
-        features: geojson.features.map((f) => {
-          const id = f.properties[config.idProp];
-          const name = f.properties[config.nameProp];
-          this.features.push({ id, name });
-          return f;
-        }),
-      };
+      // deduplicate features
+
+      const uniqueFeatures = new Map();
+
+      geojson.features.forEach((f) => {
+        const id = f.properties[config.idProp];
+        const name = f.properties[config.nameProp];
+        if (!uniqueFeatures.has(id)) {
+          uniqueFeatures.set(id, { id, name });
+        }
+      });
+
+      this.features = Array.from(uniqueFeatures.values());
+      console.log("Unique features extracted:", this.features);
 
       // Add data to map
-      this.layerGroup.addData(styledGeoJSON);
+      this.layerGroup.addData(geojson);
       console.log("Data added to layer group");
 
       // Get bounds and log them
       const bounds = this.layerGroup.getBounds();
       console.log("Layer bounds:", bounds);
       console.log("Bounds valid?", bounds.isValid());
-      console.log("Features length:", styledGeoJSON.features.length);
+      console.log("Features length:", geojson.features.length);
 
       if (
         !options.skipFitBounds &&
         bounds.isValid() &&
-        styledGeoJSON.features.length > 0
+        geojson.features.length > 0
       ) {
         console.log("Fitting bounds with options...");
 
-        const maxZoom = styledGeoJSON.features.length > 10 ? 5 : 10;
+        const maxZoom =
+          config.maxZoom || (geojson.features.length > 10 ? 5 : 10);
+        const minZoom = config.minZoom || 4;
 
         this.map.fitBounds(bounds, {
           padding: [20, 20],
-          maxZoom: maxZoom,
+          maxZoom,
+          minZoom,
         });
 
         console.log(
@@ -157,7 +164,7 @@ export default class MapViewer extends HTMLElement {
 
         if (!skipZoom) {
           this.map.fitBounds(layer.getBounds(), {
-            maxZoom: 8,
+            maxZoom: this.config?.maxZoom ?? 8,
             padding: [10, 10],
           });
         }

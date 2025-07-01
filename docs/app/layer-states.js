@@ -1,11 +1,12 @@
+// app/layer-states.js
+// This file generates layers for US states based on a predefined list and configuration settings.
+
 import { STATE_LIST } from "./list-us-states.js";
-import { config } from "./config.js";
+import { config } from "../config.js";
 
-export function generateCountyLayers() {
-  // Grab the config for counties:
-  const groupConfig = config.groups["us-counties"];
+export function generateStateLayers() {
+  const groupConfig = config.groups["us-states"];
 
-  // Pull dynamic settings from config:
   const baseUrl = groupConfig.baseUrl;
   const style = groupConfig.style;
   const idProp = groupConfig.idProp;
@@ -22,16 +23,16 @@ export function generateCountyLayers() {
 
     layers[state] = {
       label: stateLabel,
-      url: `${baseUrl}/${state}/counties.geojson`,
+      url: `${baseUrl}/${state}/state.geojson`,
       type,
       style,
       idProp,
       nameProp,
     };
   }
-
+  //console.log("Generated state layers:", layers);
   return layers;
 }
 
-// Inject dynamically:
-config.groups["us-counties"].layers = generateCountyLayers();
+// Dynamically populate config:
+config.groups["us-states"].layers = generateStateLayers();

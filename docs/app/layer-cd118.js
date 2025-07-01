@@ -1,11 +1,12 @@
+// app/layer-cd118.js
+// This file generates layers for US congressional districts (CD118) based on a predefined list and
+
 import { STATE_LIST } from "./list-us-states.js";
-import { config } from "./config.js";
+import { config } from "../config.js";
 
 export function generateCD118Layers() {
-  // Grab the config for the us-congress group
   const groupConfig = config.groups["us-congress"];
 
-  // Read dynamic settings from config
   const baseUrl = groupConfig.baseUrl;
   const style = groupConfig.style;
   const idProp = groupConfig.idProp;
@@ -29,7 +30,7 @@ export function generateCD118Layers() {
       nameProp,
     };
   }
-
+  //console.log("Generated congressional district layers:", layers);
   return layers;
 }
 

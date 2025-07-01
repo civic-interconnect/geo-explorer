@@ -1,4 +1,5 @@
-
+// app/list-us-states.js
+// This file lists all US states in a format suitable for use in dropdowns or other UI
 export const STATE_LIST = [
   "alabama", "alaska", "arizona", "arkansas", "california", "colorado",
   "connecticut", "delaware", "florida", "georgia", "hawaii", "idaho",
