@@ -1,15 +1,13 @@
-const CACHE_NAME = "geo-explorer-cache-v1";
+const CACHE_NAME = "geo-explorer-cache-v0.0.2";
 const BASE_PATH = "/geo-explorer/";
 const urlsToCache = [
   `${BASE_PATH}`,
   `${BASE_PATH}app-state.js`,
-  `${BASE_PATH}app.js`,
   `${BASE_PATH}config.js`,
-  `${BASE_PATH}core-ui.js`,
   `${BASE_PATH}favicon.ico`,
   `${BASE_PATH}index.html`,
+  `${BASE_PATH}index.js`,
   `${BASE_PATH}manifest.json`,
-  `${BASE_PATH}status.json`,
   `${BASE_PATH}styles/index.css`,
   `${BASE_PATH}app/dropdown-01-view.js`,
   `${BASE_PATH}app/dropdown-02-layer.js`,

@@ -21,9 +21,11 @@ export function generateCountyLayers() {
       .map((w) => w[0].toUpperCase() + w.slice(1))
       .join(" ");
 
+    const stateFolder = state.replace(/-/g, "_");
+
     layers[state] = {
       label: stateLabel,
-      url: `${baseUrl}/${state}/counties.geojson`,
+      url: `${baseUrl}/${stateFolder}/counties.geojson`,
       type,
       style,
       idProp,

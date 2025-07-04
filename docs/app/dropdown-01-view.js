@@ -3,7 +3,7 @@
 import { DropdownControlGroup } from "../components/DropdownControlGroup.js";
 import { config } from "../config.js";
 import { appState } from "../app-state.js";
-import { render, loadSelectedLayer } from "../app.js";
+import { render, loadSelectedLayer } from "../index.js";
 
 export function renderViewDropdown() {
   const views = Object.entries(config.groups).map(([key, group]) => ({

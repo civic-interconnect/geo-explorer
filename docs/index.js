@@ -1,8 +1,11 @@
-// app.js
+// index.js
 // This file serves as the main entry point for the GeoExplorer application.
 
 import "https://civic-interconnect.github.io/app-core/components/ci-header/ci-header.js";
 import "https://civic-interconnect.github.io/app-core/components/ci-footer/ci-footer.js";
+import "https://civic-interconnect.github.io/app-core/components/ci-theme-toggle/ci-theme-toggle.js";
+import { patchFooterStatus } from "https://civic-interconnect.github.io/app-core/index-init.js";
+
 import { appState } from "./app-state.js";
 import { config } from "./config.js";
 import { generateStateLayers } from "./app/layer-states.js";
@@ -11,7 +14,6 @@ import { generateCD118Layers } from "./app/layer-cd118.js";
 import { renderFeatureDropdown } from "./app/dropdown-03-feature.js";
 import { renderLayerDropdown } from "./app/dropdown-02-layer.js";
 import { renderViewDropdown } from "./app/dropdown-01-view.js";
-import { patchFooterStatus } from "./utils/status-footer.js";
 import { featureData } from "./app/store-feature.js";
 import "./app/map-viewer.js";
 console.log("GeoExplorer app initialized");
@@ -100,6 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("[app.js] Re-rendered after features-loaded.");
   });
 
-  patchFooterStatus();
+  patchFooterStatus("./VERSION");
   console.log("[app.js] Footer status patch requested.");
 });

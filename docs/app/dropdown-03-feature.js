@@ -1,10 +1,10 @@
 import { DropdownControlGroup } from "../components/DropdownControlGroup.js";
 import { appState } from "../app-state.js";
 import { featureData } from "./store-feature.js";
-import { sortByKey } from "../utils/ui-utils.js";
-import { highlightFeature } from "../utils/ui-utils.js";
+import { sortByKey} from "https://civic-interconnect.github.io/app-core/utils/ui-utils.js";
 
-import { render } from "../app.js";
+import { highlightFeature } from "../utils/geo-utils.js";
+import { render } from "../index.js";
 
 export function renderFeatureDropdown() {
   const container = document.getElementById("feature-container");

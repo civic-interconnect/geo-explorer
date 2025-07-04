@@ -21,9 +21,11 @@ export function generateStateLayers() {
       .map((w) => w[0].toUpperCase() + w.slice(1))
       .join(" ");
 
+    const stateFolder = state.replace(/-/g, "_");
+
     layers[state] = {
       label: stateLabel,
-      url: `${baseUrl}/${state}/state.geojson`,
+      url: `${baseUrl}/${stateFolder}/state.geojson`,
       type,
       style,
       idProp,

@@ -38,7 +38,7 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <!-- 8. Fonts & CSS -->
@@ -47,23 +47,19 @@
 
     <noscript>
         <link rel="stylesheet" href="./styles/app.css" type="text/css" media="all">
+        <p style="padding: 2rem; color: red;">
+            This application requires JavaScript to run.
+        </p>
     </noscript>
-
 
 </head>
 
 <body>
-    <button class="theme-toggle" aria-label="Toggle light or dark theme"
-        onclick="document.body.dataset.theme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';">
-        🔆
-    </button>
+    <ci-theme-toggle></ci-theme-toggle>
 
     <div class="page-wrapper">
 
-        <ci-header>
-            <span slot="title">GeoExplorer</span>
-            <span slot="subtitle">Civic Interconnect</span>
-        </ci-header>
+        <ci-header title="Geo Explorer" subtitle="Civic Interconnect"></ci-header>
 
         <main id="main-content">
             <section id="controls">
@@ -97,25 +93,21 @@
             <map-viewer></map-viewer>
         </main>
 
-        <ci-footer>
-            <!-- Footer links -->
-
-            <a slot="siteURL" href="https://civic-interconnect.github.io/geo-explorer/" target="_blank"
-                rel="noopener">Site</a>
-            <a slot="sourceURL" href="https://github.com/civic-interconnect/geo-explorer" target="_blank"
-                rel="noopener">Source</a>
-
-            <!-- Footer metadata -->
-
-            <span slot="version">Version: v0.9.1</span>
-            <span slot="updated">Updated: 2025-09-22</span>
-
-            <!-- Footer copyright -->
-
-            <span slot="copyright">&copy; 2025 Civic Interconnect</span>
+        <ci-footer 
+            site-url="https://civic-interconnect.github.io/geo-explorer/"
+            source-url="https://github.com/civic-interconnect/geo-explorer">
         </ci-footer>
     </div>
-    <script type="module" src="./app.js"></script>
+    <script>
+        if (
+            "serviceWorker" in navigator &&
+            location.hostname !== "127.0.0.1" &&
+            location.hostname !== "localhost"
+        ) {
+            navigator.serviceWorker.register("/app-core/sw.js");
+        }
+    </script>
+    <script type="module" src="./index.js"></script>
 </body>
 
 </html>

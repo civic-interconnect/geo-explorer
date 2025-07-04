@@ -21,9 +21,11 @@ export function generateCD118Layers() {
       .map((w) => w[0].toUpperCase() + w.slice(1))
       .join(" ");
 
+    const stateFolder = state.replace(/-/g, "_");
+
     layers[state] = {
       label: stateLabel,
-      url: `${baseUrl}/${state}/cd118_${state}.geojson`,
+      url: `${baseUrl}/${stateFolder}/cd118_${stateFolder}.geojson`,
       type,
       style,
       idProp,

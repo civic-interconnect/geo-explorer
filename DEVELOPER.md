@@ -22,14 +22,12 @@ git pull
 
 ## Releasing New Version
 
-After verifying changes, 
+After verifying changes, update the version number as needed. 
 
-- Change the version in VERSION.
-- Change the version in README.md badge.
-- Change the version in the commands below. 
 
 ```powershell
 git pull
+app-core bump-version 0.0.2 0.0.3
 git add .
 git commit -m "Release v0.0.2"
 git tag v0.0.2

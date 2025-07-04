@@ -1,10 +1,11 @@
 // app/dropdown-layer.js
 
+import { sortByKey } from "https://civic-interconnect.github.io/app-core/utils/ui-utils.js";
+
 import { DropdownControlGroup } from "../components/DropdownControlGroup.js";
 import { config } from "../config.js";
 import { appState } from "../app-state.js";
-import { render , loadSelectedLayer} from "../app.js";
-import { sortByKey } from "../utils/ui-utils.js";
+import { render , loadSelectedLayer} from "../index.js";
 
 export function renderLayerDropdown() {
   const group = config.groups[appState.selectedView];

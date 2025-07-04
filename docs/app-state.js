@@ -2,6 +2,6 @@
 
 export const appState = {
   selectedView: "us-states",
-  selectedLayer: "alabama", // Default to Alabama for initial layer
+  selectedLayer: "minnesota", // Default to Minnesota for initial layer
   selectedFeature: null
 };
