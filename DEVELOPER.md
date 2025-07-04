@@ -22,15 +22,20 @@ git pull
 
 ## Releasing New Version
 
-After verifying changes, update the version number as needed. 
+After verifying changes, update the version number in:
 
+- pyproject.toml (if Python is used)
+- README.md badge
+- VERSION
+- docs/VERSION
+
+Use the new release number in the commands below. 
 
 ```powershell
 git pull
-app-core bump-version 0.0.2 0.0.3
 git add .
-git commit -m "Release v0.0.2"
-git tag v0.0.2
+git commit -m "Release v0.0.3"
+git tag v0.0.3
 git push origin main
-git push origin v0.0.2
+git push origin v0.0.3
 ```
