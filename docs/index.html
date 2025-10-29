@@ -65,21 +65,35 @@
             <section id="controls">
 
                 <div class="control-group">
-
                     <label for="view-select">Choose Dataset</label>
                     <select id="view-select">
                         <option disabled selected>[ Select a Dataset ]</option>
                     </select>
-
                 </div>
 
                 <div class="control-group">
-
-
                     <label for="layer-select">Choose State</label>
                     <select id="layer-select"></select>
-
                 </div>
+
+                <!-- County (only shown for MN Precincts view) -->
+                <div hidden id="county-container" class="control-group" style="display: none;">
+                    <label hidden for="county-select">Choose County</label>
+                    <select hidden id="county-select">
+                        <option hidden disabled selected>[ Select a County ]</option>
+                    </select>
+                </div>
+
+                <!-- Sub-district (03A / 03B) -->
+                <div hidden id="subdist-container" class="control-group" style="display: none;">
+                    <label hidden for="subdist-select">Choose Sub-district</label>
+                    <select hidden  id="subdist-select">
+                        <option hidden value="" selected>All</option>
+                        <option hidden value="03A">03A</option>
+                        <option hidden value="03B">03B</option>
+                    </select>
+                </div>
+
                 <div id="feature-container" class="control-group" style="display: none;">
 
                     <label for="feature-select">Choose Feature</label>
@@ -93,8 +107,7 @@
             <map-viewer></map-viewer>
         </main>
 
-        <ci-footer 
-            site-url="https://civic-interconnect.github.io/geo-explorer/"
+        <ci-footer site-url="https://civic-interconnect.github.io/geo-explorer/"
             source-url="https://github.com/civic-interconnect/geo-explorer">
         </ci-footer>
     </div>
@@ -104,7 +117,7 @@
             location.hostname !== "127.0.0.1" &&
             location.hostname !== "localhost"
         ) {
-            navigator.serviceWorker.register("/app-core/sw.js");
+            navigator.serviceWorker.register("./sw.js");
         }
     </script>
     <script type="module" src="./index.js"></script>

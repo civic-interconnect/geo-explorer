@@ -34,8 +34,8 @@ Use the new release number in the commands below.
 ```powershell
 git pull
 git add .
-git commit -m "Release v0.0.3"
-git tag v0.0.3
+git commit -m "Release v0.0.4"
+git tag v0.0.4
 git push origin main
-git push origin v0.0.3
+git push origin v0.0.4
 ```

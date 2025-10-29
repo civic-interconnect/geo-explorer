@@ -1,6 +1,8 @@
 // app/map-viewer.js
 // Custom Web Component for displaying GeoJSON on a Leaflet map
 
+import { filterFeaturesByCountyAndSubdist } from "../utils/geo-utils.js";
+
 export default class MapViewer extends HTMLElement {
   constructor() {
     super();
@@ -19,6 +21,36 @@ export default class MapViewer extends HTMLElement {
     container.style.height = "100%";
     container.style.minHeight = "600px";
     this.shadowRoot.appendChild(container);
+
+    // New caches
+    this._fullFeatureCollection = null; // the last loaded full GeoJSON
+    this._lastFeaturesFlat = []; // convenience: flat array of raw features
+  }
+
+  applyMNPrecinctFilter({ county, subdist } = {}) {
+    if (!this._fullFeatureCollection) return;
+    console.log("[map-viewer] Filtering precincts:", { county, subdist });
+
+    const countyProp = this.config?.filterCountyProp || "county";
+    const subProp = this.config?.filterSubdistProp || "subdistrict";
+
+    // Use the shared utility (case-insensitive by default)
+    const filtered = filterFeaturesByCountyAndSubdist(this._lastFeaturesFlat, {
+      county,
+      subdist,
+      countyProp,
+      subProp,
+      caseInsensitive: true,
+    });
+
+    this.layerGroup.clearLayers();
+    this.layerGroup.addData({ type: "FeatureCollection", features: filtered });
+    console.log(`[map-viewer] Filtered to ${filtered.length} features.`);
+
+    const bounds = this.layerGroup.getBounds();
+    if (filtered.length > 0 && bounds.isValid()) {
+      this.map.fitBounds(bounds, { padding: [20, 20], maxZoom: 10 });
+    }
   }
 
   connectedCallback() {
@@ -53,6 +85,12 @@ export default class MapViewer extends HTMLElement {
       this.map.invalidateSize();
       console.log("Map size invalidated");
     }, 0);
+
+    this.addEventListener("apply-precinct-filter", (e) => {
+      // Accept optional detail { county, subdist }
+      const detail = e?.detail || {};
+      this.applyMNPrecinctFilter(detail);
+    });
   }
 
   async loadLayer(config, options = {}) {
@@ -62,7 +100,12 @@ export default class MapViewer extends HTMLElement {
     this.layerGroup.clearLayers();
     this.features = [];
     this.highlightedLayer = null;
-    this.config = config;
+    // Merge defaults so filters work even if layer config omits them
+    this.config = {
+      filterCountyProp: "county",
+      filterSubdistProp: "subdistrict",
+      ...config,
+    };
 
     try {
       const url = config.url;
@@ -75,13 +118,18 @@ export default class MapViewer extends HTMLElement {
       const geojson = await response.json();
       console.log("GeoJSON loaded, features count:", geojson.features.length);
 
+      // Cache full FC and flat array of raw features
+      this._fullFeatureCollection = geojson;
+      this._lastFeaturesFlat = Array.isArray(geojson.features)
+        ? geojson.features
+        : [];
+
       // deduplicate features
 
       const uniqueFeatures = new Map();
-
-      geojson.features.forEach((f) => {
-        const id = f.properties[config.idProp];
-        const name = f.properties[config.nameProp];
+      this._lastFeaturesFlat.forEach((f) => {
+        const id = f.properties[this.config.idProp];
+        const name = f.properties[this.config.nameProp];
         if (!uniqueFeatures.has(id)) {
           uniqueFeatures.set(id, { id, name });
         }
@@ -142,7 +190,10 @@ export default class MapViewer extends HTMLElement {
       // Dispatch custom event for UI to populate feature dropdown
       this.dispatchEvent(
         new CustomEvent("features-loaded", {
-          detail: { features: this.features },
+          detail: {
+            features: this.features, // id/name pairs
+            rawFeatures: this._lastFeaturesFlat, // full raw features with properties
+          },
           bubbles: true,
           composed: true,
         })
@@ -178,6 +229,13 @@ export default class MapViewer extends HTMLElement {
 
   _bindFeature(feature, layer) {
     layer.bindTooltip(feature.properties[this.config.nameProp]);
+    console.log("Binding tooltip for feature:", feature);
+    console.log("Tooltip name:", feature.properties[this.config.nameProp]);
+    const name = feature.properties[this.config.nameProp];
+    if (name) {
+      // Hover-only tooltip, like the other datasets
+      layer.bindTooltip(name, { permanent: false, direction: "auto" });
+    }
   }
 
   _defaultStyle() {

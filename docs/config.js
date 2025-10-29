@@ -33,5 +33,17 @@ export const config = {
       nameProp: "NAMELSAD20",
       layers: {}
     },
+    "mn-precincts": {
+      label: "MN Precincts",
+      idProp: "PrecinctID",    
+      nameProp: "precinct_name",
+      style: { color: "#0b79d0" },
+      layers: {}
+    }
   },
 };
+// county - all lowercase
+// MNLEGDIST — Minnesota house district number. 
+// PCTNAME — Precinct name.
+// name or NAME
+// PrecinctID, precinctid

@@ -3,5 +3,7 @@
 export const appState = {
   selectedView: "us-states",
   selectedLayer: "minnesota", // Default to Minnesota for initial layer
-  selectedFeature: null
+  selectedFeature: null,
+  selectedCounty: null,
+  selectedSubdist: null
 };

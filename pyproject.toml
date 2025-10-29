@@ -1,6 +1,6 @@
 [project]
 name = "geo-explorer"
-version = "0.0.3"
+version = "0.0.4"
 description = "Civic Interconnect GeoExplorer"
 authors = [
     { name="Civic Interconnect", email="info@civic-interconnect.org" }
