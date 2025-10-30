@@ -446,34 +446,10 @@ export default class MapViewer extends HTMLElement {
     requestAnimationFrame(() => {
       this.layerGroup.clearLayers();
 
-      if (county && !subdist) {
-        // Add all features with differential styling
-        const fragment = {
-          type: "FeatureCollection",
-          features: []
-        };
-
-        this._lastFeaturesFlat.forEach((feature) => {
-          const featureCounty = feature.properties[countyProp];
-          const isSelectedCounty =
-            featureCounty && featureCounty.toLowerCase() === county.toLowerCase();
-
-          const layer = L.geoJSON(feature, {
-            style: isSelectedCounty
-              ? this._getHighlightStyle()
-              : this._getGhostedStyle(),
-            onEachFeature: this._bindFeature.bind(this),
-          });
-
-          this.layerGroup.addLayer(layer);
-        });
-      } else {
-        // Normal filtering
-        this.layerGroup.addData({
-          type: "FeatureCollection",
-          features: filtered,
-        });
-      }
+      this.layerGroup.addData({
+        type: "FeatureCollection",
+        features: filtered,
+      });
 
       // Fit bounds
       if (filtered.length > 0) {

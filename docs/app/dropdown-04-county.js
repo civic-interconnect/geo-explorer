@@ -32,7 +32,11 @@ export function renderCountyDropdown() {
 
   // Non-MN path (safe to build from featureData)
   console.log("[dropdown-county] Current view:", appState.selectedView);
-  container.style.display = "flex";
+  if (appState.selectedView !== "mn-precincts") {
+    container.style.display = "none"; // Hide instead of clearing
+    return;
+  }
+  container.style.display = "block";
 
   const layerKey = appState.selectedLayer;
   const feats = (layerKey && featureData[layerKey]) || [];

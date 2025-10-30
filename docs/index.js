@@ -25,7 +25,7 @@ import { renderViewDropdown } from "./app/dropdown-01-view.js";
 // --- STORES ---
 import { featureData } from "./app/store-feature.js";
 
-// --- DEFINE CUSTOM ELEMENT ---
+// --- DEFINE CUSTOM ELEMENT AFTER OTHER IMPORTS ---
 import "./app/map-viewer.js";
 
 console.log("GeoExplorer app initialized");
