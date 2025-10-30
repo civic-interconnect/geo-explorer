@@ -7,18 +7,17 @@
 import { config } from "../config.js";
 
 export function generateMNPrecinctLayers() {
-  // Read shared config
   const groupConfig = config.groups["mn-precincts"];
 
   const baseUrl =
     groupConfig.baseUrl ||
     "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us-mn-precincts/refs/heads/main/data-out/states/minnesota/precincts";
-  const version = "2025-04"; // you can store this in config too
+  const version = "2025-04"; 
   const url = `${baseUrl}/${version}/mn-precincts-web.geojson`;
 
   const style = groupConfig.style || { color: "#0b79d0" };
-  const idProp = groupConfig.idProp || "PrecinctID";
-  const nameProp = groupConfig.nameProp || "Precinct";
+  const idProp = groupConfig.idProp || "precinct_id";
+  const nameProp = groupConfig.nameProp || "precinct_name";
 
   const layers = {
     minnesota: {
@@ -27,8 +26,8 @@ export function generateMNPrecinctLayers() {
       url,
       idProp,
       nameProp,
-      filterCountyProp: "County",
-      filterSubdistProp: "MNLegDist",
+      filterCountyProp: "county",
+      filterSubdistProp: "mn_house",
       style,
     },
   };
@@ -36,5 +35,5 @@ export function generateMNPrecinctLayers() {
   return layers;
 }
 
-// Inject dynamically so it’s available before index.js runs
+// Inject dynamically so available before index.js runs
 config.groups["mn-precincts"].layers = generateMNPrecinctLayers();

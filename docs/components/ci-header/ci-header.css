@@ -1,0 +1,56 @@
+/* =========================
+   ci-header.css
+   ========================= */
+
+:host {
+  display: block;
+  font-family: "Roboto", sans-serif;
+  line-height: 1.5;
+}
+
+/* Header wrapper styles */
+.ci-header {
+  background: var(--header-bg-color, var(--color-blue, #002b55));
+  color: var(--header-text-color, var(--color-white, #ffffff));
+  padding: 1rem;
+  text-align: center;
+}
+
+.ci-header h1,
+.ci-header h2,
+.ci-header h3 {
+  margin: 0.25em 0;
+  color: var(--header-text-color, var(--color-white, #ffffff));
+  font-family: "Roboto", sans-serif;
+}
+
+/* Slotted link styles */
+::slotted(a) {
+  color: var(--header-link-color, #7dc9ff);
+  text-decoration: none;
+}
+
+::slotted(a:hover) {
+  text-decoration: underline;
+}
+
+/* Scoped Theme Toggle button (from themes.css) */
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background-color: var(--color-white, #ffffff);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background-color: black;
+  color: var(--color-white, #ffffff);
+}

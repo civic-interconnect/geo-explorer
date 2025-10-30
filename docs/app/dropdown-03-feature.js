@@ -1,7 +1,8 @@
+// app/dropdown-03-feature.js
 import { DropdownControlGroup } from "../components/DropdownControlGroup.js";
 import { appState } from "../app-state.js";
 import { featureData } from "./store-feature.js";
-import { sortByKey} from "https://civic-interconnect.github.io/app-core/utils/ui-utils.js";
+import { sortByKey } from "https://civic-interconnect.github.io/app-core/utils/ui-utils.js";
 
 import { highlightFeature } from "../utils/geo-utils.js";
 import { render } from "../index.js";
@@ -10,6 +11,12 @@ export function renderFeatureDropdown() {
   const container = document.getElementById("feature-container");
   if (!container) return;
 
+  // HIDE feature dropdown for MN Precincts view
+  if (appState.selectedView === "mn-precincts") {
+    container.style.display = "none";
+    return;
+  }
+
   const features = featureData[appState.selectedLayer] || [];
 
   if (features.length <= 1) {
@@ -17,9 +24,9 @@ export function renderFeatureDropdown() {
     return;
   }
 
-  const featuresMap = features.map(f => ({
+  const featuresMap = features.map((f) => ({
     value: f.id,
-    label: f.name
+    label: f.name,
   }));
 
   container.style.display = "flex";
@@ -34,6 +41,6 @@ export function renderFeatureDropdown() {
       appState.selectedFeature = newFeature;
       highlightFeature(newFeature);
       render();
-    }
+    },
   });
 }

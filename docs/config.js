@@ -1,5 +1,5 @@
 // app/config.js
-// This file defines the configuration for US geographic boundaries, including states, counties, and congressional districts.
+// This file defines the configuration for geographic boundaries.
 
 export const config = {
   groups: {
@@ -35,15 +35,12 @@ export const config = {
     },
     "mn-precincts": {
       label: "MN Precincts",
-      idProp: "PrecinctID",    
+      idProp: "precinct_id",    
       nameProp: "precinct_name",
+      filterCountyProp: "county",
+      filterSubdistProp: "mn_house",
       style: { color: "#0b79d0" },
       layers: {}
     }
   },
 };
-// county - all lowercase
-// MNLEGDIST — Minnesota house district number. 
-// PCTNAME — Precinct name.
-// name or NAME
-// PrecinctID, precinctid

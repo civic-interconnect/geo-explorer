@@ -1,52 +1,78 @@
 // app/dropdown-05-subdist.js
 import { appState } from "../app-state.js";
-import { featureData } from "./store-feature.js";
 import { render } from "../index.js";
+import { DropdownControlGroup } from "../components/DropdownControlGroup.js";
+import { sortByKey } from "https://civic-interconnect.github.io/app-core/utils/ui-utils.js";
 
-function ensureContainer() {
-  let el = document.getElementById("subdist-dropdown");
-  if (!el) {
-    el = document.createElement("div");
-    el.id = "subdist-dropdown";
-    document.querySelector("#controls")?.appendChild(el);
-  }
-  return el;
-}
+// Store the raw features
+let currentRawFeatures = [];
 
-export function renderSubdistrictDropdown() {
-  const el = ensureContainer();
+export function renderSubdistrictDropdown(rawFeatures) {
+  const container = document.getElementById("subdist-container");
+  if (!container) return;
 
+  // Only show for MN Precincts view
   if (appState.selectedView !== "mn-precincts") {
-    el.innerHTML = "";
+    container.style.display = "none";
     return;
   }
 
-  const layerKey = appState.selectedLayer;
-  const feats = (layerKey && featureData[layerKey]) || [];
+  container.style.display = "flex";
 
-  // MN House sub-district like "03A", "03B"
-  const subs = Array.from(
+  // Update stored features if provided
+  if (rawFeatures) {
+    currentRawFeatures = rawFeatures;
+  }
+
+  // Filter features by selected county
+  let filteredFeatures = currentRawFeatures;
+  if (appState.selectedCounty) {
+    filteredFeatures = currentRawFeatures.filter(
+      (f) => f?.properties?.county === appState.selectedCounty
+    );
+  }
+
+  // Extract unique sub-districts from filtered features
+  const subdistricts = Array.from(
     new Set(
-      feats
-        .map(f => f?.properties?.MNLegDist)
-        .filter(v => typeof v === "string" && v.length > 0)
+      filteredFeatures
+        .map((f) => f?.properties?.mn_house)
+        .filter(Boolean)
+        .map((s) => String(s).trim())
     )
-  )
-  .sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
+  ).sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
 
-  const current = appState.selectedSubdist || "";
+  // Create options array
+  const options = [
+    { value: "", label: "All Sub-districts" },
+    ...subdistricts.map((s) => ({ value: s, label: s })),
+  ];
 
-  el.innerHTML = `
-    <label>MN House (e.g., 03A/03B)</label>
-    <select id="subdist-select">
-      <option value="">All sub-districts</option>
-      ${subs.map(s => `<option value="${s}" ${s === current ? "selected" : ""}>${s}</option>`).join("")}
-    </select>
-  `;
+  DropdownControlGroup({
+    selectId: "subdist-select",
+    labelText: "Choose Sub-district",
+    options: options,
+    value: appState.selectedSubdist || "",
+    onChange: (newSubdist) => {
+      console.log("[dropdown-subdist.js] Sub-district changed:", newSubdist);
+      appState.selectedSubdist = newSubdist || null;
 
-  el.querySelector("#subdist-select").addEventListener("change", (e) => {
-    appState.selectedSubdist = e.target.value || null;
-    render();
-    document.querySelector("map-viewer")?.dispatchEvent(new CustomEvent("apply-precinct-filter"));
+      // Apply filter to map
+      const mapViewer = document.querySelector("map-viewer");
+      if (mapViewer) {
+        mapViewer.dispatchEvent(
+          new CustomEvent("apply-precinct-filter", {
+            detail: {
+              county: appState.selectedCounty,
+              subdist: newSubdist || null,
+            },
+            bubbles: true,
+            composed: true,
+          })
+        );
+      }
+
+      render();
+    },
   });
 }

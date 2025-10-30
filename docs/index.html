@@ -22,6 +22,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    <meta property="og:title" content="Civic Interconnect - GeoExplorer">
+    <meta property="og:description" content="Explore civic boundaries with interactive maps">
+
     <!-- 5. Preconnect & preload critical resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,7 +38,6 @@
     <link rel="manifest" href="./manifest.json" crossorigin="anonymous">
 
     <!-- 7. Leaflet css, then js -->
-
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer
@@ -59,15 +61,15 @@
 
     <div class="page-wrapper">
 
-        <ci-header title="Geo Explorer" subtitle="Civic Interconnect"> 
+        <ci-header title="Geo Explorer" subtitle="Civic Interconnect">
             <span slot="title">Geo Explorer</span>
         </ci-header>
 
         <main id="main-content">
-            <section id="controls">
+            <section id="controls" role="group" aria-label="Map controls">
 
                 <div class="control-group">
-                    <label for="view-select">Choose Dataset</label>
+                    <label for="view-select" id="view-label">Choose Dataset</label>
                     <select id="view-select">
                         <option disabled selected>[ Select a Dataset ]</option>
                     </select>
@@ -79,34 +81,40 @@
                 </div>
 
                 <!-- County (only shown for MN Precincts view) -->
-                <div hidden id="county-container" class="control-group" style="display: none;">
-                    <label hidden for="county-select">Choose County</label>
-                    <select hidden id="county-select">
-                        <option hidden disabled selected>[ Select a County ]</option>
+                <div id="county-container" class="control-group" style="display: none;">
+                    <label for="county-select">Choose County</label>
+                    <select id="county-select">
+                        <option disabled selected>[ Select a County ]</option>
                     </select>
                 </div>
 
                 <!-- Sub-district (03A / 03B) -->
-                <div hidden id="subdist-container" class="control-group" style="display: none;">
-                    <label hidden for="subdist-select">Choose Sub-district</label>
-                    <select hidden id="subdist-select">
-                        <option hidden value="" selected>All</option>
-                        <option hidden value="03A">03A</option>
-                        <option hidden value="03B">03B</option>
+                <div id="subdist-container" class="control-group" style="display: none;">
+                    <label for="subdist-select">Choose Sub-district</label>
+                    <select id="subdist-select">
+                        <option value="" selected>All</option>
+                        <option value="03A">03A</option>
+                        <option value="03B">03B</option>
                     </select>
                 </div>
 
                 <div id="feature-container" class="control-group" style="display: none;">
-
                     <label for="feature-select">Choose Feature</label>
                     <select id="feature-select">
                         <option disabled selected>[ Select a Feature ]</option>
                     </select>
-
                 </div>
+
                 <div id="layer-toggles"></div>
             </section>
-            <map-viewer></map-viewer>
+            <map-viewer role="application" aria-label="Interactive map showing civic boundaries"
+                aria-describedby="map-instructions">
+            </map-viewer>
+            <!-- Add instructions for screen reader users -->
+            <div id="map-instructions" class="sr-only">
+                Use arrow keys to pan the map, plus and minus keys to zoom.
+                Tab through markers to hear location details.
+            </div>
         </main>
 
         <ci-footer site-url="https://civic-interconnect.github.io/geo-explorer/"

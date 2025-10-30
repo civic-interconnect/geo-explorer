@@ -24,7 +24,6 @@ git pull
 
 After verifying changes, update the version number in:
 
-- pyproject.toml (if Python is used)
 - README.md badge
 - VERSION
 - docs/VERSION
@@ -34,8 +33,8 @@ Use the new release number in the commands below.
 ```powershell
 git pull
 git add .
-git commit -m "Release v0.0.4"
-git tag v0.0.4
+git commit -m "Release vx.y.z"
+git tag vx.y.z
 git push origin main
-git push origin v0.0.4
+git push origin vx.y.z
 ```

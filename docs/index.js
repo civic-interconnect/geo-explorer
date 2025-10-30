@@ -1,9 +1,9 @@
 // index.js
 // This file serves as the main entry point for the GeoExplorer application.
 
-import "https://civic-interconnect.github.io/app-core/components/ci-header/ci-header.js";
-import "https://civic-interconnect.github.io/app-core/components/ci-footer/ci-footer.js";
-import "https://civic-interconnect.github.io/app-core/components/ci-theme-toggle/ci-theme-toggle.js";
+import "./components/ci-header/ci-header.js";
+import "./components/ci-footer/ci-footer.js";
+import "./components/ci-theme-toggle/ci-theme-toggle.js";
 import { patchFooterStatus } from "https://civic-interconnect.github.io/app-core/index-init.js";
 
 import { appState } from "./app-state.js";
@@ -12,12 +12,18 @@ import { generateStateLayers } from "./app/layer-states.js";
 import { generateCountyLayers } from "./app/layer-counties.js";
 import { generateCD118Layers } from "./app/layer-cd118.js";
 import { generateMNPrecinctLayers } from "./app/layer-mn-precincts.js";
+import { renderSubdistrictDropdown } from "./app/dropdown-05-subdist.js";
+import { renderCountyDropdown } from "./app/dropdown-04-county.js";
 import { renderFeatureDropdown } from "./app/dropdown-03-feature.js";
 import { renderLayerDropdown } from "./app/dropdown-02-layer.js";
 import { renderViewDropdown } from "./app/dropdown-01-view.js";
 import { featureData } from "./app/store-feature.js";
+import { countyData } from "./app/store-county.js";
 import "./app/map-viewer.js";
 console.log("GeoExplorer app initialized");
+
+// Store raw features for filtering
+let currentRawFeatures = [];
 
 // ---------- DATA (populate before render) ----------
 config.groups["us-states"].layers = generateStateLayers();
@@ -45,6 +51,8 @@ export function render() {
   renderViewDropdown();
   renderLayerDropdown();
   renderFeatureDropdown();
+  renderCountyDropdown();
+  renderSubdistrictDropdown();
   console.log("[app.js] RENDER COMPLETE. App state:", appState);
 }
 
@@ -107,12 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
       counties.map((c) => `<option value="${c}">${c}</option>`).join("");
   }
 
-  function maybeShowMNPrecinctControls() {
-    const isMN = appState.selectedView === "mn-precincts";
-    countyContainer.style.display = isMN ? "block" : "none";
-    subdistContainer.style.display = isMN ? "block" : "none";
-  }
-
   // Show/hide MN Precinct controls based on current view
   function updatePrecinctControlsVisibility() {
     const isMNPrecinctView = appState.selectedView === "mn-precincts";
@@ -128,13 +130,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- VIEW SELECT CHANGE HANDLER ---
   viewSelect.addEventListener("change", () => {
     const selectedView = viewSelect.value;
+    appState.selectedView = selectedView;  
 
     // Control dropdown visibility
     if (selectedView === "mn-precincts") {
       // SHOW for MN Precincts only
       countyContainer.style.display = "block";
       subdistContainer.style.display = "block";
-      populateMNPrecinctCounties(); 
+      populateMNPrecinctCounties();
     } else {
       // HIDE for all other views
       countyContainer.style.display = "none";
@@ -145,39 +148,29 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // --- COUNTY SELECT CHANGE HANDLER (for MN Precincts only) ---
-  countySelect.addEventListener("change", async () => {
-    // Only process if we're in MN Precincts view
+  countySelect.addEventListener("change", () => {
     if (appState.selectedView !== "mn-precincts") return;
 
     const county = countySelect.value;
-    console.log("[app] Loading precincts for county:", county);
+    appState.selectedCounty = county; // store selected county
+    appState.selectedSubdist = null; // reset subdist when county changes
 
-    const countyUrl = `https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us-mn-precincts/main/data-out/counties/${county}/precincts.geojson`;
-    const fallbackUrl =
-      "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us-mn-precincts/main/data-out/states/minnesota/precincts/2025-04/mn-precincts-web.geojson";
+    console.log("[app] County selected:", county);
 
-    let url = countyUrl;
+    // Re-render to update subdist dropdown
+    renderSubdistrictDropdown(currentRawFeatures);
 
-    try {
-      const resp = await fetch(countyUrl, { method: "HEAD" });
-      if (!resp.ok) {
-        console.warn(
-          `[app] County file not found (${county}), falling back to statewide precincts.`
-        );
-        url = fallbackUrl;
-      }
-    } catch (err) {
-      console.error("[app] Error checking county file:", err);
-      url = fallbackUrl;
-    }
-
-    mapViewer.loadLayer({
-      label: `${county} Precincts`,
-      url,
-      idProp: "PrecinctID",
-      nameProp: "Precinct",
-      style: { color: "#0b79d0" },
-    });
+    // Apply county filter to map
+    mapViewer.dispatchEvent(
+      new CustomEvent("apply-precinct-filter", {
+        detail: {
+          county: county,
+          subdist: null,
+        },
+        bubbles: true,
+        composed: true,
+      })
+    );
   });
 
   // --- SUBDISTRICT SELECT CHANGE HANDLER ---
@@ -208,33 +201,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const raw = e.detail.rawFeatures || [];
     const layerKey = appState.selectedLayer || "";
 
+    // Store raw features for later use
+    currentRawFeatures = raw;
+
     if (features.length > 1 && layerKey) {
       featureData[layerKey] = features;
     } else if (layerKey) {
       featureData[layerKey] = [];
     }
 
-    // If MN precincts view, build county list from RAW features and default to St. Louis once
+    // If MN precincts view, update dropdowns
     if (appState.selectedView === "mn-precincts") {
       updateCountyOptions(raw);
-
-      // Default to St. Louis if nothing chosen yet
-      if (!countySelect.value) {
-        countySelect.value = "St. Louis";
-        // Apply county filter immediately
-        const mapViewer = document.querySelector("map-viewer");
-        mapViewer.dispatchEvent(
-          new CustomEvent("apply-precinct-filter", {
-            detail: { county: "St. Louis" },
-            bubbles: true,
-            composed: true,
-          })
-        );
-      }
     }
 
-    // Re-render the normal dropdowns
-    render();
+    renderViewDropdown();
+    renderLayerDropdown();
+    renderFeatureDropdown();
+    renderCountyDropdown();
+    renderSubdistrictDropdown(raw); // Pass raw features
   });
 
   // --- INITIALIZE FOOTER ---

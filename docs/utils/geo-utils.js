@@ -7,27 +7,62 @@ export function highlightFeature(featureId) {
   }
 }
 
-export function filterFeaturesByCountyAndSubdist(features, {
-  county,
-  subdist,
-  countyProp = "county",
-  subProp = "subdistrict",
-  caseInsensitive = true,
-} = {}) {
-  if (!Array.isArray(features)) return [];
+export function highlightCounty(countyId) {
+  const mapViewer = document.querySelector("map-viewer");
+  if (countyId) {
+    mapViewer.highlightCounty(countyId, { skipZoom: true });
+  }
+}
 
-  const norm = (v) => (v == null ? "" : String(v));
-  const toKey = (v) => (caseInsensitive ? norm(v).toLowerCase().trim() : norm(v).trim());
+// utils/geo-utils.js
+export function filterFeaturesByCountyAndSubdist(features, options = {}) {
+  const {
+    county,
+    subdist,
+    countyProp = "county",
+    subProp = "mn_house",
+    caseInsensitive = true,
+  } = options;
 
-  const wantCounty = county ? toKey(county) : null;
-  const wantSub = subdist ? toKey(subdist) : null;
+  console.log("[geo-utils] Filtering with:", {
+    county,
+    subdist,
+    countyProp,
+    subProp,
+  });
 
   return features.filter((f) => {
-    const props = f?.properties || {};
-    const haveCounty = toKey(props[countyProp]);
-    const haveSub = toKey(props[subProp]);
-    const okCounty = wantCounty ? haveCounty === wantCounty : true;
-    const okSub = wantSub ? haveSub === wantSub : true;
-    return okCounty && okSub;
+    const props = f.properties || {};
+
+    // Check county match
+    if (county) {
+      const featureCounty = props[countyProp];
+      if (!featureCounty) {
+        console.log(
+          "[geo-utils] Feature missing `county` property:",
+          countyProp,
+          props
+        );
+        return false;
+      }
+
+      const match = caseInsensitive
+        ? featureCounty.toLowerCase() === county.toLowerCase()
+        : featureCounty === county;
+
+      if (!match) return false;
+    }
+
+    // Check subdist match
+    if (subdist) {
+      const featureSubdist = props[subProp];
+      const match = caseInsensitive
+        ? featureSubdist?.toLowerCase() === subdist.toLowerCase()
+        : featureSubdist === subdist;
+
+      if (!match) return false;
+    }
+
+    return true;
   });
 }

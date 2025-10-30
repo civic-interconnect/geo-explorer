@@ -22,6 +22,9 @@ export default class MapViewer extends HTMLElement {
     container.style.minHeight = "600px";
     this.shadowRoot.appendChild(container);
 
+    // Store state-level view settings
+    this._stateView = null; // { bounds, zoom, center }
+
     // New caches
     this._fullFeatureCollection = null; // the last loaded full GeoJSON
     this._lastFeaturesFlat = []; // convenience: flat array of raw features
@@ -34,7 +37,13 @@ export default class MapViewer extends HTMLElement {
     const countyProp = this.config?.filterCountyProp || "county";
     const subProp = this.config?.filterSubdistProp || "subdistrict";
 
-    // Use the shared utility (case-insensitive by default)
+    console.log("[map-viewer] Using property names:", { countyProp, subProp });
+    console.log(
+      "[map-viewer] Sample feature properties:",
+      this._lastFeaturesFlat[0]?.properties
+    );
+
+    // Use shared utility (case-insensitive by default)
     const filtered = filterFeaturesByCountyAndSubdist(this._lastFeaturesFlat, {
       county,
       subdist,
@@ -43,13 +52,53 @@ export default class MapViewer extends HTMLElement {
       caseInsensitive: true,
     });
 
+    console.log(
+      `[map-viewer] Filtered to ${filtered.length} features out of ${this._lastFeaturesFlat.length} total.`
+    );
+
     this.layerGroup.clearLayers();
-    this.layerGroup.addData({ type: "FeatureCollection", features: filtered });
+
+    // If filtering by county, style differently
+    if (county && !subdist) {
+      // Add all features but style them differently
+      this._lastFeaturesFlat.forEach((feature) => {
+        const featureCounty = feature.properties[countyProp];
+        const isSelectedCounty =
+          featureCounty && featureCounty.toLowerCase() === county.toLowerCase();
+
+        const layer = L.geoJSON(feature, {
+          style: isSelectedCounty
+            ? this._getHighlightStyle()
+            : this._getGhostedStyle(),
+          onEachFeature: this._bindFeature.bind(this),
+        });
+
+        this.layerGroup.addLayer(layer);
+      });
+    } else {
+      // Normal filtering - just show filtered features
+      this.layerGroup.addData({
+        type: "FeatureCollection",
+        features: filtered,
+      });
+    }
+
     console.log(`[map-viewer] Filtered to ${filtered.length} features.`);
 
-    const bounds = this.layerGroup.getBounds();
-    if (filtered.length > 0 && bounds.isValid()) {
-      this.map.fitBounds(bounds, { padding: [20, 20], maxZoom: 10 });
+    // Fit bounds to filtered features only
+    if (filtered.length > 0) {
+      const filteredCollection = L.geoJSON({
+        type: "FeatureCollection",
+        features: filtered,
+      });
+      const bounds = filteredCollection.getBounds();
+
+      if (bounds.isValid()) {
+        this.map.fitBounds(bounds, {
+          padding: [20, 20],
+          maxZoom: 10,
+        });
+      }
     }
   }
 
@@ -95,6 +144,14 @@ export default class MapViewer extends HTMLElement {
 
   async loadLayer(config, options = {}) {
     console.log("Loading layer:", config);
+
+    // Determine if this is a state-level view or a subdivision
+    const isStateLevel =
+      config.type === "state" || config.url.includes("/state.geojson");
+    const isSubdivision =
+      config.type === "counties" ||
+      config.type === "cds" ||
+      config.type === "precincts";
 
     // Clear existing data
     this.layerGroup.clearLayers();
@@ -153,27 +210,62 @@ export default class MapViewer extends HTMLElement {
         bounds.isValid() &&
         geojson.features.length > 0
       ) {
-        console.log("Fitting bounds with options...");
+        if (isStateLevel) {
+          // This is the main state view - save its bounds
+          this.map.fitBounds(bounds, {
+            padding: [20, 20],
+            maxZoom: 7,
+            minZoom: 4,
+          });
 
-        const maxZoom =
-          config.maxZoom || (geojson.features.length > 10 ? 5 : 10);
-        const minZoom = config.minZoom || 4;
+          // Store the view for reuse
+          this._stateView = {
+            bounds: bounds,
+            zoom: this.map.getZoom(),
+            center: this.map.getCenter(),
+          };
 
-        this.map.fitBounds(bounds, {
-          padding: [20, 20],
-          maxZoom,
-          minZoom,
-        });
-
-        console.log(
-          "After fitBounds - center:",
-          this.map.getCenter(),
-          "zoom:",
-          this.map.getZoom()
-        );
-      } else {
-        console.log("Skipping fitBounds because skipFitBounds = true");
+          console.log("Saved state view:", this._stateView);
+        } else if (isSubdivision && this._stateView) {
+          // This is a subdivision - reuse the state's view
+          this.map.setView(this._stateView.center, this._stateView.zoom);
+          console.log("Reusing state view for subdivision:", this._stateView);
+        } else {
+          // Fallback to normal fitBounds
+          this.map.fitBounds(bounds, {
+            padding: [20, 20],
+            maxZoom: config.maxZoom || 8,
+            minZoom: config.minZoom || 4,
+          });
+        }
       }
+
+      // if (
+      //   !options.skipFitBounds &&
+      //   bounds.isValid() &&
+      //   geojson.features.length > 0
+      // ) {
+      //   console.log("Fitting bounds with options...");
+
+      //   const maxZoom =
+      //     config.maxZoom || (geojson.features.length > 10 ? 5 : 10);
+      //   const minZoom = config.minZoom || 4;
+
+      //   this.map.fitBounds(bounds, {
+      //     padding: [20, 20],
+      //     maxZoom,
+      //     minZoom,
+      //   });
+
+      //   console.log(
+      //     "After fitBounds - center:",
+      //     this.map.getCenter(),
+      //     "zoom:",
+      //     this.map.getZoom()
+      //   );
+      // } else {
+      //   console.log("Skipping fitBounds because skipFitBounds = true");
+      // }
 
       // Force map to recalculate size after loading
       setTimeout(() => {
@@ -229,13 +321,29 @@ export default class MapViewer extends HTMLElement {
 
   _bindFeature(feature, layer) {
     layer.bindTooltip(feature.properties[this.config.nameProp]);
-    console.log("Binding tooltip for feature:", feature);
-    console.log("Tooltip name:", feature.properties[this.config.nameProp]);
     const name = feature.properties[this.config.nameProp];
     if (name) {
-      // Hover-only tooltip, like the other datasets
       layer.bindTooltip(name, { permanent: false, direction: "auto" });
     }
+  }
+
+  _getHighlightStyle() {
+    return {
+      color: "#e63946",
+      weight: 2,
+      opacity: 0.8,
+      fillOpacity: 0.3,
+    };
+  }
+
+  _getGhostedStyle() {
+    return {
+      color: "#999",
+      weight: 0.5,
+      opacity: 0.2,
+      fillOpacity: 0.05,
+      dashArray: "2,4",
+    };
   }
 
   _defaultStyle() {
@@ -269,3 +377,12 @@ export default class MapViewer extends HTMLElement {
 
 // Register the custom element
 customElements.define("map-viewer", MapViewer);
+
+// Global error handler for component registration failures
+window.addEventListener("error", (e) => {
+  if (e.message.includes("customElements")) {
+    console.error("Component registration failed:", e);
+    // Show a basic UI without web components
+    document.body.classList.add("components-failed");
+  }
+});
