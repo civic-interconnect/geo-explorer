@@ -1,7 +1,8 @@
 // app/dropdown-04-county.js
 import { DropdownControlGroup } from "../components/DropdownControlGroup.js";
 import { appState } from "../app-state.js";
-import { countyData } from "./store-county.js";
+import { featureData } from "./store-feature.js";
+
 import { sortByKey } from "https://civic-interconnect.github.io/app-core/utils/ui-utils.js";
 import { render } from "../index.js";
 
@@ -23,29 +24,29 @@ export function renderCountyDropdown() {
     return;
   }
 
-  // Only show for the MN Precincts view
-  console.log("[dropdown-county] Current view:", appState.selectedView);
-  if (appState.selectedView !== "mn-precincts") {
-    container.style.display = "none"; // Hide instead of clearing
-    return;
+  if (appState.selectedView === "mn-precincts") {
+    console.log("[dropdown-county] MN view detected; preserving counties populated from raw. Skipping rebuild.");
+    container.style.display = "flex";
+    return; 
   }
-  container.style.display = "block";
+
+  // Non-MN path (safe to build from featureData)
+  console.log("[dropdown-county] Current view:", appState.selectedView);
+  container.style.display = "flex";
 
   const layerKey = appState.selectedLayer;
   const feats = (layerKey && featureData[layerKey]) || [];
   console.log("[dropdown-04-county] Features for layer", layerKey, feats);
 
-    // Build unique county list
   const counties = Array.from(
     new Set(
       feats
-        .map(f => f?.properties?.County)
+        .map(f => f?.properties?.county)
         .filter(v => typeof v === "string" && v.length > 0)
     )
   ).sort();
   console.log("[dropdown-county] Available counties:", counties);
 
-  // Don't hide if no counties yet - they'll load after the layer loads
   const countiesMap = counties.map(c => ({
     value: c.id,
     label: c.name
