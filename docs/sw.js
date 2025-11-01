@@ -1,6 +1,6 @@
 // Service Worker for Geo Explorer Application
 // sw.js
-const CACHE_VERSION = "v0.0.7";
+const CACHE_VERSION = "v0.0.7a";
 const CACHE_NAME = `geo-explorer-cache-${CACHE_VERSION}`;
 const TILE_CACHE = `map-tiles-${CACHE_VERSION}`;
 const DATA_CACHE = `geojson-data-${CACHE_VERSION}`;
