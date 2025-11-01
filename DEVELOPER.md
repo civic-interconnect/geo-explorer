@@ -32,6 +32,7 @@ Use the new release number in the commands below.
 
 ```powershell
 git pull
+npx eslint --fix 
 git add .
 git commit -m "Prep vx.y.z"
 git push -u origin main

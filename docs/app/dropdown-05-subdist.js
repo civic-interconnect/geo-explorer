@@ -9,6 +9,14 @@ import { sortByKey } from "https://civic-interconnect.github.io/app-core/utils/u
 // Store the raw features
 let currentRawFeatures = [];
 
+
+/**
+ * Renders the Sub-district selection dropdown.
+ * When the sub-district changes, it updates the app state,
+ * and triggers a re-render of the UI.
+ * @param {*} rawFeatures
+ * @returns {void}
+ */
 export function renderSubdistrictDropdown(rawFeatures) {
   const container = document.getElementById("subdist-container");
   if (!container) return;

@@ -2,21 +2,38 @@
 import { DropdownControlGroup } from "../components/DropdownControlGroup.js";
 import { appState } from "../app-state.js";
 import { featureData } from "./store-feature.js";
-
 import { sortByKey } from "https://civic-interconnect.github.io/app-core/utils/ui-utils.js";
 import { render } from "../index.js";
 
+
+/**
+ * Ensures the county dropdown container exists.
+ * @returns {HTMLElement} The county dropdown container element.
+ */
 function ensureContainer() {
+  if (typeof document === "undefined") {
+    return null;
+  }
   let el = document.getElementById("county-dropdown");
   if (!el) {
     el = document.createElement("div");
     el.id = "county-dropdown";
-    document.querySelector("#controls")?.appendChild(el);
+    const controlsElement = document.querySelector("#controls");
+    if (controlsElement) {
+      controlsElement.appendChild(el);
+    }
   }
   return el;
 }
 
 
+/**
+ * Renders the County selection dropdown.
+ * When the county changes, it updates the app state,
+ * applies the precinct filter on the map,
+ * and triggers a re-render of the UI.
+ * @returns {void}
+ */
 export function renderCountyDropdown() {
   const container = ensureContainer();
   if (!container) {
@@ -25,9 +42,11 @@ export function renderCountyDropdown() {
   }
 
   if (appState.selectedView === "mn-precincts") {
-    console.log("[dropdown-county] MN view detected; preserving counties populated from raw. Skipping rebuild.");
+    console.log(
+      "[dropdown-county] MN view detected; preserving counties populated from raw. Skipping rebuild."
+    );
     container.style.display = "flex";
-    return; 
+    return;
   }
 
   // Non-MN path (safe to build from featureData)
@@ -45,15 +64,15 @@ export function renderCountyDropdown() {
   const counties = Array.from(
     new Set(
       feats
-        .map(f => f?.properties?.county)
-        .filter(v => typeof v === "string" && v.length > 0)
+        .map((f) => f?.properties?.county)
+        .filter((v) => typeof v === "string" && v.length > 0)
     )
   ).sort();
   console.log("[dropdown-county] Available counties:", counties);
 
-  const countiesMap = counties.map(c => ({
+  const countiesMap = counties.map((c) => ({
     value: c.id,
-    label: c.name
+    label: c.name,
   }));
 
   DropdownControlGroup({

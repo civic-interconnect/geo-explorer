@@ -9,8 +9,8 @@
  *   <ci-theme-toggle></ci-theme-toggle>
  */
 
-const styleURL = new URL('./ci-theme-toggle.css', import.meta.url);
-const templateURL = new URL('./ci-theme-toggle.html', import.meta.url);
+const styleURL = new URL("./ci-theme-toggle.css", import.meta.url);
+const templateURL = new URL("./ci-theme-toggle.html", import.meta.url);
 
 class CiThemeToggle extends HTMLElement {
   constructor() {

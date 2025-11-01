@@ -6,12 +6,21 @@ import { appState } from "../app-state.js";
 import { render } from "../index.js";
 import { loadSelectedLayer } from "../map/map-viewer-bridge.js";
 
+/**
+ * Renders the View selection dropdown.
+ * When the view changes, it updates the app state,
+ * resets the selected layer and feature as needed,
+ * and triggers a re-render of the UI.
+ * @param {void}
+ */
 export function renderViewDropdown() {
   const views = Object.entries(config.groups).map(([key, group]) => ({
     value: key,
     label: group.label,
   }));
 
+
+  /** View selection dropdown */
   DropdownControlGroup({
     selectId: "view-select",
     labelText: "Choose Dataset",

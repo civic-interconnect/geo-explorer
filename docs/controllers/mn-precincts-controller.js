@@ -1,8 +1,15 @@
 // controllers/mn-precincts-controller.js
+
 import { appState } from "../app-state.js";
 import { getCurrentRawFeatures } from "../map/map-viewer-bridge.js";
 import { renderSubdistrictDropdown } from "../app/dropdown-05-subdist.js";
 
+/**
+ * Wires up the MN precincts controller.
+ * @param {Object} param0
+ * @param {Object} param0.refs - Reference to DOM elements.
+ * @param {Object} param0.mapViewer - Reference to the map viewer instance.
+ */
 export function wireMNPrecinctsController({ refs, mapViewer }) {
   // County change (MN only)
   document.addEventListener("change", (e) => {

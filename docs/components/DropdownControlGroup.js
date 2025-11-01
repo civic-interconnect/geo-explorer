@@ -1,3 +1,5 @@
+// components/DropdownControlGroup.js
+
 /**
  * Populates an existing <select> and its label inside a .control-group div.
  *

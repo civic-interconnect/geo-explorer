@@ -4,6 +4,11 @@
 import { STATE_LIST } from "./list-us-states.js";
 import { config } from "../config.js";
 
+
+/**
+ * Generates layers for US counties for all states.
+ * @returns {Object} The generated layers for each state.
+ */
 export function generateCountyLayers() {
   const groupConfig = config.groups["us-counties"];
 

@@ -42,7 +42,7 @@ const urlsToCache = [
 
 // Install event -pre-cache essential files
 self.addEventListener("install", (event) => {
-  console.log('[SW] Installing service worker...');
+  console.log("[SW] Installing service worker...");
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
@@ -52,16 +52,16 @@ self.addEventListener("install", (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener("activate", (event) => {
-  console.log('[SW] Activating service worker...');
+  console.log("[SW] Activating service worker...");
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames
           .filter(cacheName => {
             // Delete old version caches
-            return cacheName.startsWith('geo-explorer-cache-') ||
-                   cacheName.startsWith('map-tiles-') ||
-                   cacheName.startsWith('geojson-data-');
+            return cacheName.startsWith("geo-explorer-cache-") ||
+                   cacheName.startsWith("map-tiles-") ||
+                   cacheName.startsWith("geojson-data-");
           })
           .filter(cacheName => {
             return cacheName !== CACHE_NAME && 
@@ -69,7 +69,7 @@ self.addEventListener("activate", (event) => {
                    cacheName !== DATA_CACHE;
           })
           .map(cacheName => {
-            console.log('[SW] Deleting old cache:', cacheName);
+            console.log("[SW] Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           })
       );
@@ -82,7 +82,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   
   // Handle tile requests - Stale While Revalidate
-  if (url.hostname.includes('tile.openstreetmap.org')) {
+  if (url.hostname.includes("tile.openstreetmap.org")) {
     event.respondWith(
       caches.open(TILE_CACHE).then(cache => {
         return cache.match(event.request).then(cachedResponse => {
@@ -105,7 +105,7 @@ self.addEventListener("fetch", (event) => {
   }
   
   // Handle GeoJSON data - Network First with Cache Fallback
-  if (url.pathname.endsWith('.geojson') || url.pathname.includes('/geo-data/')) {
+  if (url.pathname.endsWith(".geojson") || url.pathname.includes("/geo-data/")) {
     event.respondWith(
       caches.open(DATA_CACHE).then(cache => {
         return fetch(event.request)
@@ -120,13 +120,13 @@ self.addEventListener("fetch", (event) => {
             // Network failed, try cache
             return cache.match(event.request).then(cachedResponse => {
               if (cachedResponse) {
-                console.log('[SW] Serving GeoJSON from cache (offline)');
+                console.log("[SW] Serving GeoJSON from cache (offline)");
                 return cachedResponse;
               }
               // No cache available
-              return new Response('{"error": "Offline and no cached data available"}', {
+              return new Response("{\"error\": \"Offline and no cached data available\"}", {
                 status: 503,
-                headers: { 'Content-Type': 'application/json' }
+                headers: { "Content-Type": "application/json" }
               });
             });
           });
@@ -137,8 +137,8 @@ self.addEventListener("fetch", (event) => {
   
   // Handle app assets - Cache First
   if (url.hostname === location.hostname || 
-      url.hostname === 'civic-interconnect.github.io' ||
-      url.hostname === 'unpkg.com') {
+      url.hostname === "civic-interconnect.github.io" ||
+      url.hostname === "unpkg.com") {
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
         if (cachedResponse) {
@@ -164,8 +164,8 @@ self.addEventListener("fetch", (event) => {
 });
 
 // Optional: Handle background sync for deferred data updates
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });

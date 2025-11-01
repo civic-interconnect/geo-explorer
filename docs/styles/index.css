@@ -21,6 +21,16 @@ map-viewer::part(map-container) {
   height: 100% !important;
 }
 
+/* Map labels */
+.feature-label span {
+  font: 12px/1.2 "Inter", system-ui, sans-serif;
+  color: #111;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.9);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* ==================================================
    CONTROLS PANEL
    ================================================== */
@@ -153,6 +163,14 @@ map-viewer::part(map-container) {
     max-width: 100%;
     font-size: 0.95rem;
     padding: 0.4rem 2rem 0.4rem 0.75rem;
+  }
+}
+
+/* Dark mode styles for map labels */
+@media (prefers-color-scheme: dark) {
+  .feature-label span {
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.9);
   }
 }
 

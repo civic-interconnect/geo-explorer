@@ -2,8 +2,14 @@
 // Enhanced Web Component with performance optimizations
 
 import { filterFeaturesByCountyAndSubdist } from "../utils/geo-utils.js";
+import { LabelLayerController } from "./utils/label-layer.js";
 
-// Utility function for debouncing
+/**
+ * Debounces a function by a specified wait time.
+ * @param {Function} func - The function to debounce.
+ * @param {number} wait - The wait time in milliseconds.
+ * @returns {Function} The debounced function.
+ */
 function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -16,6 +22,10 @@ function debounce(func, wait) {
   };
 }
 
+/**
+ * MapViewer Web Component
+ * @extends HTMLElement
+ */
 export default class MapViewer extends HTMLElement {
   constructor() {
     super();
@@ -28,6 +38,8 @@ export default class MapViewer extends HTMLElement {
     leafletCSS.crossOrigin = "anonymous";
     this.shadowRoot.appendChild(leafletCSS);
 
+    this._injectLabelStyles();
+
     // Create container for the map inside the Shadow DOM
     const container = document.createElement("div");
     container.id = "map-container";
@@ -38,17 +50,19 @@ export default class MapViewer extends HTMLElement {
 
     // Store state-level view settings
     this._stateView = null;
-    
+
     // Caches for performance
     this._fullFeatureCollection = null;
     this._lastFeaturesFlat = [];
     this._featureCache = new Map(); // Cache for processed features
     this._visibleBounds = null; // Track visible area
-    
+
     // Performance flags
-    this._isMobile = window.matchMedia('(max-width: 768px)').matches;
-    this._reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
+    this._isMobile = window.matchMedia("(max-width: 768px)").matches;
+    this._reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
     // Debounced methods
     this._debouncedInvalidateSize = debounce(() => {
       if (this.map) this.map.invalidateSize();
@@ -63,20 +77,20 @@ export default class MapViewer extends HTMLElement {
       // Enable canvas renderer for better performance
       preferCanvas: true,
       renderer: L.canvas({ padding: 0.5 }),
-      
+
       // Optimize animations for mobile/reduced motion
       zoomAnimation: !this._isMobile && !this._reducedMotion,
       fadeAnimation: !this._isMobile && !this._reducedMotion,
       markerZoomAnimation: !this._isMobile && !this._reducedMotion,
-      
+
       // Interaction optimizations
       wheelDebounceTime: 40,
       wheelPxPerZoomLevel: 120,
-      
+
       // Initial view
       center: [39, -98],
       zoom: 4,
-      
+
       // Bounds
       maxZoom: 18,
       minZoom: 3,
@@ -84,35 +98,38 @@ export default class MapViewer extends HTMLElement {
 
     this.map = L.map(container, mapOptions);
     console.log("Map initialized with optimized settings");
+    this.labelController = new LabelLayerController(this.map);
 
     // Add tile layer with optimizations
     const tileOptions = {
       attribution: "&copy; OpenStreetMap contributors",
       maxZoom: 18,
-      
+
       // Performance optimizations
       updateWhenIdle: false,
       updateWhenZooming: false,
       keepBuffer: this._isMobile ? 1 : 2,
       tileSize: 256,
       zoomOffset: 0,
-      
+
       // Loading optimizations
       crossOrigin: true,
       detectRetina: false, // Disable for performance
     };
-    
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", tileOptions)
-      .addTo(this.map);
+
+    L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      tileOptions
+    ).addTo(this.map);
 
     // Create optimized GeoJSON layer
     this.layerGroup = L.geoJSON(null, {
       style: this._defaultStyle.bind(this),
       onEachFeature: this._bindFeature.bind(this),
-      
+
       // Performance: simplify rendering for complex geometries
       smoothFactor: this._isMobile ? 2 : 1,
-      
+
       // Only render features in viewport
       filter: this._isMobile ? this._viewportFilter.bind(this) : null,
     }).addTo(this.map);
@@ -121,12 +138,15 @@ export default class MapViewer extends HTMLElement {
     this.highlightedLayer = null;
 
     // Track viewport for optimization
-    this.map.on('moveend', debounce(() => {
-      this._visibleBounds = this.map.getBounds();
-      if (this._isMobile) {
-        this._updateVisibleFeatures();
-      }
-    }, 300));
+    this.map.on(
+      "moveend",
+      debounce(() => {
+        this._visibleBounds = this.map.getBounds();
+        if (this._isMobile) {
+          this._updateVisibleFeatures();
+        }
+      }, 300)
+    );
 
     // Optimize resize handling
     this._debouncedInvalidateSize();
@@ -143,16 +163,19 @@ export default class MapViewer extends HTMLElement {
 
   async loadLayer(config, options = {}) {
     console.log("Loading layer with optimizations:", config);
-    
+
     // Show loading state
     this._showLoading();
 
-    const isStateLevel = config.type === "state" || config.url.includes("/state.geojson");
-    const isSubdivision = ["counties", "cds", "precincts"].includes(config.type);
+    const isStateLevel =
+      config.type === "state" || config.url.includes("/state.geojson");
+    const isSubdivision = ["counties", "cds", "precincts"].includes(
+      config.type
+    );
 
     // Clear existing data efficiently
     this._clearLayers();
-    
+
     this.config = {
       filterCountyProp: "county",
       filterSubdistProp: "subdistrict",
@@ -166,28 +189,29 @@ export default class MapViewer extends HTMLElement {
       // Check cache first
       const cacheKey = `geojson_${url}`;
       let geojson = this._featureCache.get(cacheKey);
-      
+
       if (!geojson) {
         console.log("Fetching GeoJSON from:", url);
-        
+
         // Add timeout for slow networks
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
-        
-        const response = await fetch(url, { 
+
+        const response = await fetch(url, {
           signal: controller.signal,
-          cache: 'default' // Use browser cache
+          cache: "default", // Use browser cache
         });
-        
+
         clearTimeout(timeoutId);
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
+
+        if (!response.ok)
+          throw new Error(`HTTP error! status: ${response.status}`);
+
         geojson = await response.json();
-        
+
         // Cache the result
         this._featureCache.set(cacheKey, geojson);
-        
+
         // Simplify geometries for large datasets
         if (geojson.features.length > 1000) {
           console.log("Simplifying large dataset...");
@@ -201,7 +225,9 @@ export default class MapViewer extends HTMLElement {
 
       // Process features
       this._fullFeatureCollection = geojson;
-      this._lastFeaturesFlat = Array.isArray(geojson.features) ? geojson.features : [];
+      this._lastFeaturesFlat = Array.isArray(geojson.features)
+        ? geojson.features
+        : [];
 
       // Extract unique features efficiently
       const uniqueFeatures = new Map();
@@ -221,9 +247,21 @@ export default class MapViewer extends HTMLElement {
         this.layerGroup.addData(geojson);
       }
 
+      // Labels: follow the same field as tooltips: this.config.nameProp
+      if (this.labelController) {
+        this.labelController.nameProp = this.config.nameProp || "name";
+        this.labelController.minZoom = this.config.labelMinZoom ?? 11;
+        this.labelController.buildLabels(this.layerGroup);
+        this.labelController.enable();
+      }
+
       // Handle bounds
       const bounds = this.layerGroup.getBounds();
-      if (!options.skipFitBounds && bounds.isValid() && geojson.features.length > 0) {
+      if (
+        !options.skipFitBounds &&
+        bounds.isValid() &&
+        geojson.features.length > 0
+      ) {
         this._handleBounds(bounds, isStateLevel, isSubdivision);
       }
 
@@ -241,7 +279,6 @@ export default class MapViewer extends HTMLElement {
           composed: true,
         })
       );
-      
     } catch (err) {
       console.error("Failed to load layer:", err);
       this._showError("Failed to load layer data: " + err.message);
@@ -254,17 +291,17 @@ export default class MapViewer extends HTMLElement {
   async _addDataProgressively(geojson, chunkSize = 100) {
     console.log("Adding data progressively...");
     const features = geojson.features;
-    
+
     for (let i = 0; i < features.length; i += chunkSize) {
       const chunk = features.slice(i, i + chunkSize);
       this.layerGroup.addData({
         type: "FeatureCollection",
-        features: chunk
+        features: chunk,
       });
-      
+
       // Allow UI to update
       if (i % (chunkSize * 5) === 0) {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
     }
   }
@@ -272,7 +309,7 @@ export default class MapViewer extends HTMLElement {
   // Viewport filter for mobile optimization
   _viewportFilter(feature) {
     if (!this._visibleBounds) return true;
-    
+
     // Simple check if feature might be in view
     const coords = feature.geometry.coordinates;
     if (feature.geometry.type === "Point") {
@@ -285,21 +322,25 @@ export default class MapViewer extends HTMLElement {
   // Update visible features on mobile
   _updateVisibleFeatures() {
     if (!this._isMobile || !this._visibleBounds) return;
-    
+
     // Re-filter and render only visible features
     this.layerGroup.clearLayers();
-    const visibleFeatures = this._lastFeaturesFlat.filter(f => 
+    const visibleFeatures = this._lastFeaturesFlat.filter((f) =>
       this._viewportFilter(f)
     );
-    
+
     this.layerGroup.addData({
       type: "FeatureCollection",
-      features: visibleFeatures
+      features: visibleFeatures,
     });
   }
 
   // Optimized layer clearing
   _clearLayers() {
+    // turn off labels first so we do not leave a stray layer on the map
+    if (this.labelController) {
+      this.labelController.disable();
+    }
     if (this.layerGroup) {
       this.layerGroup.clearLayers();
     }
@@ -314,9 +355,9 @@ export default class MapViewer extends HTMLElement {
         padding: [20, 20],
         maxZoom: 7,
         minZoom: 4,
-        animate: !this._reducedMotion
+        animate: !this._reducedMotion,
       });
-      
+
       this._stateView = {
         bounds: bounds,
         zoom: this.map.getZoom(),
@@ -324,14 +365,14 @@ export default class MapViewer extends HTMLElement {
       };
     } else if (isSubdivision && this._stateView) {
       this.map.setView(this._stateView.center, this._stateView.zoom, {
-        animate: !this._reducedMotion
+        animate: !this._reducedMotion,
       });
     } else {
       this.map.fitBounds(bounds, {
         padding: [20, 20],
         maxZoom: this.config.maxZoom || 8,
         minZoom: this.config.minZoom || 4,
-        animate: !this._reducedMotion
+        animate: !this._reducedMotion,
       });
     }
   }
@@ -339,37 +380,37 @@ export default class MapViewer extends HTMLElement {
   // Loading indicator
   _addLoadingControl() {
     const LoadingControl = L.Control.extend({
-      onAdd: function(map) {
-        const container = L.DomUtil.create('div', 'leaflet-control-loading');
-        container.style.display = 'none';
-        container.style.background = 'white';
-        container.style.padding = '5px 10px';
-        container.style.borderRadius = '4px';
-        container.style.boxShadow = '0 1px 5px rgba(0,0,0,0.4)';
-        container.innerHTML = '⏳ Loading...';
+      onAdd: function (map) {
+        const container = L.DomUtil.create("div", "leaflet-control-loading");
+        container.style.display = "none";
+        container.style.background = "white";
+        container.style.padding = "5px 10px";
+        container.style.borderRadius = "4px";
+        container.style.boxShadow = "0 1px 5px rgba(0,0,0,0.4)";
+        container.innerHTML = "⏳ Loading...";
         return container;
-      }
+      },
     });
-    
-    this._loadingControl = new LoadingControl({ position: 'topleft' });
+
+    this._loadingControl = new LoadingControl({ position: "topleft" });
     this._loadingControl.addTo(this.map);
   }
 
   _showLoading() {
     if (this._loadingControl && this._loadingControl._container) {
-      this._loadingControl._container.style.display = 'block';
+      this._loadingControl._container.style.display = "block";
     }
   }
 
   _hideLoading() {
     if (this._loadingControl && this._loadingControl._container) {
-      this._loadingControl._container.style.display = 'none';
+      this._loadingControl._container.style.display = "none";
     }
   }
 
   _showError(message) {
     const container = this.shadowRoot.getElementById("map-container");
-    const errorDiv = document.createElement('div');
+    const errorDiv = document.createElement("div");
     errorDiv.style.cssText = `
       position: absolute;
       top: 50%;
@@ -384,29 +425,29 @@ export default class MapViewer extends HTMLElement {
     `;
     errorDiv.textContent = message;
     container.appendChild(errorDiv);
-    
+
     setTimeout(() => errorDiv.remove(), 5000);
   }
 
   // Keep your existing methods but add requestAnimationFrame for smooth updates
   highlightFeature(id, { skipZoom = false } = {}) {
     console.log("Highlighting feature:", id, "skipZoom?", skipZoom);
-    
+
     // Use requestAnimationFrame for smooth visual updates
     requestAnimationFrame(() => {
       this.layerGroup.eachLayer((layer) => {
         const featureId = layer.feature.properties[this.config.idProp];
         if (featureId == id) {
           this._applyHighlightStyle(layer);
-          
+
           if (!skipZoom) {
             this.map.fitBounds(layer.getBounds(), {
               maxZoom: this.config?.maxZoom ?? 8,
               padding: [10, 10],
-              animate: !this._reducedMotion
+              animate: !this._reducedMotion,
             });
           }
-          
+
           this.highlightedLayer = layer;
         } else {
           this._applySecondaryStyle(layer);
@@ -426,7 +467,7 @@ export default class MapViewer extends HTMLElement {
     // Use cached filtered results if available
     const filterKey = `${county}_${subdist}`;
     let filtered;
-    
+
     if (this._featureCache.has(filterKey)) {
       filtered = this._featureCache.get(filterKey);
     } else {
@@ -451,6 +492,12 @@ export default class MapViewer extends HTMLElement {
         features: filtered,
       });
 
+      // Rebuild labels for filtered features
+      if (this.labelController) {
+        this.labelController.buildLabels(this.layerGroup);
+        this.labelController.enable();
+      }
+
       // Fit bounds
       if (filtered.length > 0) {
         const filteredCollection = L.geoJSON({
@@ -463,21 +510,20 @@ export default class MapViewer extends HTMLElement {
           this.map.fitBounds(bounds, {
             padding: [20, 20],
             maxZoom: 10,
-            animate: !this._reducedMotion
+            animate: !this._reducedMotion,
           });
         }
       }
     });
   }
 
-  // Keep all your existing style methods unchanged
   _bindFeature(feature, layer) {
     const name = feature.properties[this.config.nameProp];
     if (name) {
-      layer.bindTooltip(name, { 
-        permanent: false, 
+      layer.bindTooltip(name, {
+        permanent: false,
         direction: "auto",
-        sticky: this._isMobile // Make tooltips easier to see on mobile
+        sticky: this._isMobile, // Make tooltips easier to see on mobile
       });
     }
   }
@@ -528,11 +574,45 @@ export default class MapViewer extends HTMLElement {
       dashArray: "4",
     });
   }
+
+  /**
+   * Injects feature-label CSS into the Shadow DOM if not already present.
+   */
+  _injectLabelStyles() {
+    if (
+      !this.shadowRoot ||
+      this.shadowRoot.querySelector("style[data-label-style]")
+    ) {
+      return; // avoid duplicates
+    }
+
+    const style = document.createElement("style");
+    style.setAttribute("data-label-style", "true"); // mark it
+    style.textContent = `
+    .feature-label span {
+      font: 12px/1.2 system-ui, sans-serif;
+      color: #111;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.9);
+      white-space: nowrap;
+      pointer-events: none;
+      user-select: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      .feature-label span {
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+      }
+    }
+  `;
+    this.shadowRoot.appendChild(style);
+  }
+
+
 }
 
 // Register (idempotent)
-if (!customElements.get('map-viewer')) {
-  customElements.define('map-viewer', MapViewer);
+if (!customElements.get("map-viewer")) {
+  customElements.define("map-viewer", MapViewer);
 }
 
 // Global error handler

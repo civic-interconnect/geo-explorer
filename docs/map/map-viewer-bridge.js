@@ -10,6 +10,12 @@ import { renderSubdistrictDropdown } from "../app/dropdown-05-subdist.js";
 
 let currentRawFeatures = [];
 
+/**
+ * Set up the map bridge by initializing the map viewer and setting up event listeners.
+ * @param {Object} param0.refs - Reference to DOM elements.
+ * @param {Function} param0.render - Render function.
+ * @returns {Promise<HTMLElement|null>} The map viewer element or null if not found.
+ */
 export async function setupMapBridge({  }) {
   await customElements.whenDefined("map-viewer");
   const mapViewer = document.querySelector("map-viewer");
@@ -41,7 +47,7 @@ export async function setupMapBridge({  }) {
             .map(s => String(s).trim()))
         ).sort();
         countySelect.innerHTML =
-          '<option disabled selected>[ Select a County ]</option>' +
+          "<option disabled selected>[ Select a County ]</option>" +
           counties.map(c => `<option value="${c}">${c}</option>`).join("");
       }
     }

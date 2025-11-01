@@ -1,18 +1,27 @@
 // app/update-county-options.js
-export function updateCountyOptions(rawFeatures) {
-  const countySelect = document.getElementById("county-select");
-  if (!countySelect) return;
 
-  const counties = Array.from(
-    new Set(
-      (rawFeatures || [])
-        .map(f => f && f.properties && f.properties.county)
-        .filter(Boolean)
-        .map(s => String(s).trim())
-    )
-  ).sort();
+/**
+ * Update county options from features
+ * @param {HTMLSelectElement} countySelect - The county select element
+ * @param {Array} rawFeatures - Raw feature data
+ * @param {Function} extractCountiesFn - Function to extract counties
+ * @param {Function} buildOptionsFn - Function to build HTML options
+ */
+export function updateCountyOptions(
+  countySelect,
+  rawFeatures,
+  extractCountiesFn,
+  buildOptionsFn
+) {
+  if (!countySelect) return false;
 
-  countySelect.innerHTML =
-    '<option disabled selected>[ Select a County ]</option>' +
-    counties.map(c => `<option value="${c}">${c}</option>`).join("");
+  const counties = extractCountiesFn(rawFeatures);
+  const optionsHTML = buildOptionsFn(counties);
+  countySelect.innerHTML = optionsHTML;
+
+  console.log(
+    "[DEBUG] updateCountyOptions(): populated %d counties",
+    counties.length
+  );
+  return true;
 }

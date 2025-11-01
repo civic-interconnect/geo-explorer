@@ -7,6 +7,13 @@ import { sortByKey } from "https://civic-interconnect.github.io/app-core/utils/u
 import { highlightFeature } from "../utils/geo-utils.js";
 import { render } from "../index.js";
 
+
+/**
+ * Renders the Feature selection dropdown.
+ * When the feature changes, it updates the app state,
+ * and triggers a re-render of the UI.
+ * @returns {void}
+ */
 export function renderFeatureDropdown() {
   const container = document.getElementById("feature-container");
   if (!container) return;

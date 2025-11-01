@@ -27,8 +27,8 @@
  *   </ci-header>
  */
 
-const styleURL = new URL('./ci-header.css', import.meta.url);
-const templateURL = new URL('./ci-header.html', import.meta.url);
+const styleURL = new URL("./ci-header.css", import.meta.url);
+const templateURL = new URL("./ci-header.html", import.meta.url);
 
 /**
  * Defines the <ci-header> web component.
@@ -36,7 +36,7 @@ const templateURL = new URL('./ci-header.html', import.meta.url);
 class CiHeader extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    this.attachShadow({ mode: "open" });
   }
 
   /**

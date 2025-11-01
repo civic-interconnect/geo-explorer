@@ -4,6 +4,11 @@
 import { STATE_LIST } from "./list-us-states.js";
 import { config } from "../config.js";
 
+
+/**
+ * Returns layers for US congressional districts (CD118) for all states.
+ * @returns {Object} The generated layers for each state.
+ */
 export function generateCD118Layers() {
   const groupConfig = config.groups["us-congress"];
 

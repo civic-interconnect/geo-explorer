@@ -1,19 +1,24 @@
 // controllers/view-controller.js
+
 import { appState } from "../app-state.js";
 import {
   populateMNPrecinctCounties,
-  updatePrecinctControlsVisibility,
+  updateControlsVisibility,
 } from "../app/mn-precinct-helpers.js";
 
+
+/**
+ * Wires up the view controller.
+ * @param {Object} param0
+ * @param {Object} param0.refs - Reference to DOM elements.
+ * @param {Function} param0.render - Render function.
+ * @returns {void}
+ */
 export function wireViewController({ refs, render }) {
   const viewSelect = refs.viewSelect();
-  const countyContainer = refs.countyContainer();
-  const subdistContainer = refs.subdistContainer();
-
   if (!viewSelect) return;
 
-  // Initial visibility check
-  updatePrecinctControlsVisibility();
+  updateControlsVisibility();
 
   viewSelect.addEventListener("change", () => {
     const selectedView = viewSelect.value;
@@ -22,11 +27,11 @@ export function wireViewController({ refs, render }) {
     // Control dropdown visibility
     if (selectedView === "mn-precincts") {
       // SHOW for MN Precincts only
-      updatePrecinctControlsVisibility();
+      updateControlsVisibility();
       populateMNPrecinctCounties();
     } else {
       // HIDE for all other views
-      updatePrecinctControlsVisibility();
+      updateControlsVisibility();
     }
 
     render();
