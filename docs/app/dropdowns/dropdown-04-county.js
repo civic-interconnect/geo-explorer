@@ -2,7 +2,7 @@
 import { DropdownControlGroup } from "../../components/DropdownControlGroup.js";
 import { filterState } from "../filters/filter-state.js";
 import { renderSubdistrictDropdown } from "./dropdown-05-subdist.js";
-
+import { renderPrecinctDropdown } from "./dropdown-06-precinct.js";
 // Store the raw features
 let currentRawFeatures = [];
 
@@ -81,6 +81,7 @@ export function renderCountyDropdown(rawFeatures) {
 
       // TRIGGER SUBDIST DROPDOWN RE-RENDER
       renderSubdistrictDropdown(currentRawFeatures);
+      renderPrecinctDropdown(currentRawFeatures);
     },
   });
 }

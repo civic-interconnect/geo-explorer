@@ -5,7 +5,6 @@ import { filterState } from "../filters/filter-state.js";
 // Store the raw features
 let currentRawFeatures = [];
 
-
 /**
  * Renders the Precinct selection dropdown for highlighting a single precinct.
  * When a precinct is selected, it highlights it in red on the map.
@@ -25,7 +24,7 @@ export function renderPrecinctDropdown(rawFeatures) {
 
   if (state.filters.county) {
     filteredFeatures = filteredFeatures.filter(
-      (f) => f?.properties?.county === state.filters.county
+      (f) => f?.properties?.county === state.filters.county,
     );
   }
 
@@ -52,21 +51,23 @@ export function renderPrecinctDropdown(rawFeatures) {
     });
   }
 
-  // Extract unique precincts from filtered features
-  const precincts = Array.from(
-    new Set(
-      filteredFeatures
-        .map((f) => f?.properties?.mn_house)
-        .filter(Boolean)
-        .map((s) => String(s).trim())
-    )
-  ).sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
+  // Extract unique precincts from the county/district-filtered features.
+  const precincts = new Map();
 
-  console.log("[dropdown-precinct] Available precincts:", precincts);
+  for (const feature of filteredFeatures) {
+    const { precinct_id: id, precinct_name: name } = feature.properties || {};
+
+    if (id != null) {
+      precincts.set(String(id), name || String(id));
+    }
+  }
 
   const options = [
     { value: "", label: "Highlight Precinct..." },
-    ...precincts.map((p) => ({ value: p, label: p })),
+    ...Array.from(precincts, ([value, label]) => ({
+      value,
+      label,
+    })).sort((a, b) => a.label.localeCompare(b.label, "en", { numeric: true })),
   ];
 
   DropdownControlGroup({

@@ -19,8 +19,13 @@ export function populateMNPrecinctCounties(countySelect) {
  * @param {string} selectedView - Current selected view
  */
 export function updateControlsVisibility(containers, selectedView) {
-  const { featureContainer, countyContainer, subdistContainer, countySelect } =
-    containers;
+  const {
+    featureContainer,
+    countyContainer,
+    subdistContainer,
+    countySelect,
+    precinctContainer,
+  } = containers;
 
   // Feature container (Box 3) - show for Congressional Districts
   if (featureContainer) {
@@ -38,13 +43,16 @@ export function updateControlsVisibility(containers, selectedView) {
   if (subdistContainer) {
     subdistContainer.style.display = isMNPrecinctView ? "flex" : "none";
   }
+  if (precinctContainer) {
+    precinctContainer.style.display = isMNPrecinctView ? "flex" : "none";
+  }
 
   console.log(
     "[DEBUG] updateControlsVisibility(): view=%s, feature=%s, county=%s, subdist=%s",
     selectedView,
     featureContainer?.style.display,
     countyContainer?.style.display,
-    subdistContainer?.style.display
+    subdistContainer?.style.display,
   );
 
   // Populate county dropdown when entering MN Precincts view
@@ -95,7 +103,7 @@ export function handleCountyChange(selectedCounty, deps) {
 
   console.log(
     "[DEBUG] COUNTY CHANGE: selectedCounty=%s, reset selectedSubdist",
-    selectedCounty
+    selectedCounty,
   );
 
   // Re-render subdist dropdown
@@ -143,7 +151,7 @@ export function dispatchPrecinctFilter(mapViewer, filterData) {
       detail: filterData,
       bubbles: true,
       composed: true,
-    })
+    }),
   );
 
   console.log("[DEBUG] Dispatched apply-precinct-filter:", filterData);
@@ -172,7 +180,7 @@ export function handleFeaturesLoaded(eventDetail, deps) {
     "[DEBUG] FEATURES-LOADED: features=%d raw=%d layerKey=%s",
     features.length,
     raw.length,
-    layerKey
+    layerKey,
   );
 
   // Update feature data
@@ -181,7 +189,7 @@ export function handleFeaturesLoaded(eventDetail, deps) {
     console.log(
       "[DEBUG] FEATURES-LOADED: featureData[%s]=%d",
       layerKey,
-      featureData[layerKey].length
+      featureData[layerKey].length,
     );
   }
 

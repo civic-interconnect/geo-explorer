@@ -60,12 +60,18 @@ preferred-citation:
 references:
   - type: data
     title: "Civic Data Boundaries: U.S. States and Counties"
+    authors:
+      - name: "Civic Interconnect"
     url: "https://github.com/civic-interconnect/civic-data-boundaries-us"
 
   - type: data
     title: "Civic Data Boundaries: U.S. Congressional Districts"
+    authors:
+      - name: "Civic Interconnect"
     url: "https://github.com/civic-interconnect/civic-data-boundaries-us-cd118"
 
   - type: data
     title: "Civic Data Boundaries: U.S. Minnesota Precincts"
+    authors:
+      - name: "Civic Interconnect"
     url: "https://github.com/civic-interconnect/civic-data-boundaries-us-mn-precincts"

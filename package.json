@@ -1,6 +1,6 @@
 {
   "name": "geo-explorer",
-  "version": "0.1.0",
+  "version": "0.0.8",
   "description": "GeoExplorer for Civic Interconnect projects",
   "type": "module",
   "devDependencies": {

@@ -7,8 +7,6 @@ import { refs, verifyRefs } from "./ui/dom-refs.js";
 import { extractCounties, buildCountyOptions } from "./helpers/options.js";
 import { updateCountyOptions } from "./app/update-county-options.js";
 import {
-  handleCountyChange,
-  handleSubdistChange,
   handleFeaturesLoaded,
   updateControlsVisibility,
 } from "./app/mn-precinct-helpers.js";
@@ -135,6 +133,7 @@ document.addEventListener("DOMContentLoaded", function initializeApp() {
   function initializeState() {
     appState.selectedView = "us-states";
     appState.selectedLayer = "minnesota";
+    filterState.setView("state");
     appState.selectedFeature = null;
 
     console.log(
@@ -147,39 +146,13 @@ document.addEventListener("DOMContentLoaded", function initializeApp() {
 
   // Attach event listeners with dependency injection
   function attachEventListeners() {
-
-    // County change handler
-    if (elements.countySelect) {
-      elements.countySelect.addEventListener(
-        "change",
-        function onCountyChange(event) {
-          handleCountyChange(event.target.value, createDependencies());
-        },
-      );
-    }
-
-    // Subdistrict change handler
-    if (elements.subdistSelect) {
-      elements.subdistSelect.addEventListener(
-        "change",
-        function onSubdistChange(event) {
-          handleSubdistChange(event.target.value, {
-            ...createDependencies(),
-            countySelect: elements.countySelect,
-          });
-        },
-      );
-    }
-
     // Features loaded handler
     if (elements.mapViewer) {
       elements.mapViewer.addEventListener(
         "features-loaded",
         function onFeaturesLoaded(event) {
-          currentRawFeatures = handleFeaturesLoaded(
-            event.detail,
-            createDependencies(),
-          );
+          currentRawFeatures = event.detail?.rawFeatures || [];
+          handleFeaturesLoaded(event.detail, createDependencies());
 
           // After features load, set initial highlight if we're on states view
           if (appState.selectedView === "us-states" && appState.selectedLayer) {

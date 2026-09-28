@@ -1,10 +1,11 @@
 // app/dropdown-01-view.js
 
-import { DropdownControlGroup } from "../components/DropdownControlGroup.js";
-import { config } from "../config.js";
-import { appState } from "../app-state.js";
-import { render, loadSelectedLayer } from "../index.js";
-import { updateControlsVisibility } from "./mn-precinct-helpers.js";
+import { DropdownControlGroup } from "../../components/DropdownControlGroup.js";
+import { config } from "../../config.js";
+import { appState } from "../../app-state.js";
+import { render, loadSelectedLayer } from "../../index.js";
+import { updateControlsVisibility } from "../mn-precinct-helpers.js";
+import { filterState } from "../filters/filter-state.js";
 
 /**
  * Render the dataset selection dropdown.
@@ -27,6 +28,14 @@ export function renderViewDropdown() {
       const layers = config.groups[newView]?.layers || {};
 
       appState.selectedView = newView;
+      const filterViews = {
+        "us-states": "state",
+        "us-counties": "counties",
+        "us-congress": "cds",
+        "mn-precincts": "mn-precincts",
+      };
+
+      filterState.setView(filterViews[newView]);
       appState.selectedLayer =
         previousLayer && Object.hasOwn(layers, previousLayer)
           ? previousLayer
@@ -42,8 +51,9 @@ export function renderViewDropdown() {
           countyContainer: document.getElementById("county-container"),
           subdistContainer: document.getElementById("subdist-container"),
           countySelect: document.getElementById("county-select"),
+          precinctContainer: document.getElementById("precinct-container"),
         },
-        newView
+        newView,
       );
 
       render();
