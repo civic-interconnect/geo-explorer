@@ -1,0 +1,71 @@
+# ============================================================
+# CITATION.cff (How to cite this project)
+# ============================================================
+
+# REQ.UNIVERSAL: Professional open projects SHOULD include this file.
+# USAGE: See https://citation-file-format.github.io/ for details.
+# Check with:
+# uvx cffconvert --validate
+
+cff-version: "1.2.0"
+message: "If you use this work, please cite it using the metadata in CITATION.cff."
+type: software
+
+title: "Civic Interconnect: GeoExplorer"
+version: "0.0.8"
+date-released: 2026-09-28
+
+authors:
+  - family-names: Case
+    given-names: Denise M.
+    orcid: "https://orcid.org/0000-0001-6165-7389"
+    affiliation: Civic Interconnect
+
+repository-code: "https://github.com/civic-interconnect/geo-explorer"
+url: "https://civic-interconnect.github.io/geo-explorer/"
+license: MIT
+
+abstract: >
+  Browser-based geographic visualization software for exploring civic
+  boundaries through interactive maps. GeoExplorer displays U.S. state,
+  county, and congressional district boundaries and Minnesota voting
+  precincts using published GeoJSON datasets from Civic Interconnect.
+  The application provides geographic selection, map navigation, and
+  dataset-specific controls, including county and legislative district
+  filtering for Minnesota precincts. It is implemented in JavaScript
+  using Leaflet and published as a static web application on GitHub Pages.
+
+keywords:
+  - civic data
+  - geographic boundaries
+  - geographic visualization
+  - interactive maps
+  - GeoJSON
+  - GIS
+  - Leaflet
+  - election geography
+  - JavaScript
+
+preferred-citation:
+  type: software
+  authors:
+    - family-names: Case
+      given-names: Denise M.
+      orcid: "https://orcid.org/0000-0001-6165-7389"
+      affiliation: Civic Interconnect
+  title: "Civic Interconnect: GeoExplorer"
+  year: 2026
+  version: "0.0.8"
+
+references:
+  - type: data
+    title: "Civic Data Boundaries: U.S. States and Counties"
+    url: "https://github.com/civic-interconnect/civic-data-boundaries-us"
+
+  - type: data
+    title: "Civic Data Boundaries: U.S. Congressional Districts"
+    url: "https://github.com/civic-interconnect/civic-data-boundaries-us-cd118"
+
+  - type: data
+    title: "Civic Data Boundaries: U.S. Minnesota Precincts"
+    url: "https://github.com/civic-interconnect/civic-data-boundaries-us-mn-precincts"

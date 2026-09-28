@@ -1,8 +1,16 @@
 // app/map-viewer.js
 // Enhanced Web Component with performance optimizations
 
-import { filterFeaturesByCountyAndSubdist } from "../utils/geo-utils.js";
+console.log("[mapViewer] Starting");
+
+import { filterFeaturesByCountyAndSubdist } from "./utils/geo-utils.js";
 import { LabelLayerController } from "./utils/label-layer.js";
+import { _injectLabelStyles } from "./utils/inject-label-styles.js";
+import { loadLayerImpl } from "./utils/load-layer.js";
+import { filterState } from "./filters/filter-state.js";
+import { applyFiltersToMap } from "./filters/filter-applier.js";
+
+console.log("[mapViewer] Initialized imports");
 
 /**
  * Debounces a function by a specified wait time.
@@ -29,6 +37,8 @@ function debounce(func, wait) {
 export default class MapViewer extends HTMLElement {
   constructor() {
     super();
+    console.log("[mapViewer] Starting construction");
+
     this.attachShadow({ mode: "open" });
 
     // Add Leaflet CSS to shadow DOM with preload hint
@@ -38,7 +48,8 @@ export default class MapViewer extends HTMLElement {
     leafletCSS.crossOrigin = "anonymous";
     this.shadowRoot.appendChild(leafletCSS);
 
-    this._injectLabelStyles();
+    // Inject label styles with custom sizing
+    _injectLabelStyles(this.shadowRoot, {});
 
     // Create container for the map inside the Shadow DOM
     const container = document.createElement("div");
@@ -67,6 +78,8 @@ export default class MapViewer extends HTMLElement {
     this._debouncedInvalidateSize = debounce(() => {
       if (this.map) this.map.invalidateSize();
     }, 100);
+
+    console.log("[mapViewer] initialization complete");
   }
 
   connectedCallback() {
@@ -97,8 +110,11 @@ export default class MapViewer extends HTMLElement {
     };
 
     this.map = L.map(container, mapOptions);
-    console.log("Map initialized with optimized settings");
-    this.labelController = new LabelLayerController(this.map);
+    console.log("[mapViewer] Map initialized with optimized settings");
+    // this.labelController = new LabelLayerController(this.map, {
+    //   minZoom: 11, // Only show labels when zoomed in
+    //   useColorCoding: false, // Start with black, set to true later for colors
+    // });
 
     // Add tile layer with optimizations
     const tileOptions = {
@@ -137,6 +153,13 @@ export default class MapViewer extends HTMLElement {
     this.features = [];
     this.highlightedLayer = null;
 
+    // Initialize label controller - will be configured per layer
+    this.labelController = new LabelLayerController(this.map, {
+      minZoom: 6,
+      useColorCoding: false,
+      alwaysShow: true,
+    });
+
     // Track viewport for optimization
     this.map.on(
       "moveend",
@@ -151,10 +174,22 @@ export default class MapViewer extends HTMLElement {
     // Optimize resize handling
     this._debouncedInvalidateSize();
 
-    // Event listeners
-    this.addEventListener("apply-precinct-filter", (e) => {
-      const detail = e?.detail || {};
-      this.applyMNPrecinctFilter(detail);
+    // Subscribe to filter changes
+    this._unsubscribeFilters = filterState.subscribe((state) => {
+      console.log("[MapViewer] Filter state changed:", state);
+      applyFiltersToMap(this, state);
+    });
+
+    // Clear highlight on map click
+    this.map.on("click", () => {
+      filterState.clearHighlight();
+    });
+
+    // Clear highlight on ESC
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        filterState.clearHighlight();
+      }
     });
 
     // Add loading indicator
@@ -162,129 +197,17 @@ export default class MapViewer extends HTMLElement {
   }
 
   async loadLayer(config, options = {}) {
-    console.log("Loading layer with optimizations:", config);
+    const result = await loadLayerImpl(this, config, options);
 
-    // Show loading state
-    this._showLoading();
-
-    const isStateLevel =
-      config.type === "state" || config.url.includes("/state.geojson");
-    const isSubdivision = ["counties", "cds", "precincts"].includes(
-      config.type
-    );
-
-    // Clear existing data efficiently
-    this._clearLayers();
-
-    this.config = {
-      filterCountyProp: "county",
-      filterSubdistProp: "subdistrict",
-      ...config,
-    };
-
+    // At this point loadLayerImpl should have set this.config and rebuilt layers.
+    // Emit layer-changed exactly once per successful load.
     try {
-      const url = config.url;
-      if (!url) throw new Error("Layer config missing 'url' property!");
-
-      // Check cache first
-      const cacheKey = `geojson_${url}`;
-      let geojson = this._featureCache.get(cacheKey);
-
-      if (!geojson) {
-        console.log("Fetching GeoJSON from:", url);
-
-        // Add timeout for slow networks
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-        const response = await fetch(url, {
-          signal: controller.signal,
-          cache: "default", // Use browser cache
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok)
-          throw new Error(`HTTP error! status: ${response.status}`);
-
-        geojson = await response.json();
-
-        // Cache the result
-        this._featureCache.set(cacheKey, geojson);
-
-        // Simplify geometries for large datasets
-        if (geojson.features.length > 1000) {
-          console.log("Simplifying large dataset...");
-          // You might want to use turf.js simplify here
-        }
-      } else {
-        console.log("Using cached GeoJSON");
-      }
-
-      console.log("GeoJSON loaded, features count:", geojson.features.length);
-
-      // Process features
-      this._fullFeatureCollection = geojson;
-      this._lastFeaturesFlat = Array.isArray(geojson.features)
-        ? geojson.features
-        : [];
-
-      // Extract unique features efficiently
-      const uniqueFeatures = new Map();
-      for (const f of this._lastFeaturesFlat) {
-        const id = f.properties[this.config.idProp];
-        if (!uniqueFeatures.has(id)) {
-          const name = f.properties[this.config.nameProp];
-          uniqueFeatures.set(id, { id, name });
-        }
-      }
-      this.features = Array.from(uniqueFeatures.values());
-
-      // Add data progressively for large datasets
-      if (this._lastFeaturesFlat.length > 500 && !this._isMobile) {
-        await this._addDataProgressively(geojson);
-      } else {
-        this.layerGroup.addData(geojson);
-      }
-
-      // Labels: follow the same field as tooltips: this.config.nameProp
-      if (this.labelController) {
-        this.labelController.nameProp = this.config.nameProp || "name";
-        this.labelController.minZoom = this.config.labelMinZoom ?? 11;
-        this.labelController.buildLabels(this.layerGroup);
-        this.labelController.enable();
-      }
-
-      // Handle bounds
-      const bounds = this.layerGroup.getBounds();
-      if (
-        !options.skipFitBounds &&
-        bounds.isValid() &&
-        geojson.features.length > 0
-      ) {
-        this._handleBounds(bounds, isStateLevel, isSubdivision);
-      }
-
-      // Invalidate size after data load
-      this._debouncedInvalidateSize();
-
-      // Dispatch event
-      this.dispatchEvent(
-        new CustomEvent("features-loaded", {
-          detail: {
-            features: this.features,
-            rawFeatures: this._lastFeaturesFlat,
-          },
-          bubbles: true,
-          composed: true,
-        })
-      );
-    } catch (err) {
-      console.error("Failed to load layer:", err);
-      this._showError("Failed to load layer data: " + err.message);
-    } finally {
-      this._hideLoading();
+      this._dispatchLayerChanged();
+    } catch (e) {
+      console.warn("[mapViewer] Failed to dispatch layer-changed:", e);
     }
+
+    return result;
   }
 
   // Progressive loading for large datasets
@@ -387,7 +310,7 @@ export default class MapViewer extends HTMLElement {
         container.style.padding = "5px 10px";
         container.style.borderRadius = "4px";
         container.style.boxShadow = "0 1px 5px rgba(0,0,0,0.4)";
-        container.innerHTML = "⏳ Loading...";
+        container.innerHTML = "Loading...";
         return container;
       },
     });
@@ -427,6 +350,28 @@ export default class MapViewer extends HTMLElement {
     container.appendChild(errorDiv);
 
     setTimeout(() => errorDiv.remove(), 5000);
+  }
+
+  // app/map-viewer.js (add near other private helpers)
+  _dispatchLayerChanged(extraDetail) {
+    const detail = {
+      // commonly useful fields for downstream logic
+      key: this.config?.key || this.config?.layerKey || null,
+      type: this.config?.type || null,
+      idProp: this.config?.idProp || null,
+      nameProp: this.config?.nameProp || null,
+      // allow callers to pass overrides
+      ...(extraDetail || {}),
+    };
+
+    // bubble + composed lets the event escape the shadow boundary if needed
+    this.dispatchEvent(
+      new CustomEvent("layer-changed", {
+        detail,
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   // Keep your existing methods but add requestAnimationFrame for smooth updates
@@ -518,14 +463,33 @@ export default class MapViewer extends HTMLElement {
   }
 
   _bindFeature(feature, layer) {
-    const name = feature.properties[this.config.nameProp];
-    if (name) {
-      layer.bindTooltip(name, {
-        permanent: false,
-        direction: "auto",
-        sticky: this._isMobile, // Make tooltips easier to see on mobile
-      });
-    }
+    layer.on({
+      click: (e) => {
+        L.DomEvent.stopPropagation(e);
+        this._highlightFeature(layer);
+      },
+      // mouseover: (e) => {
+      //   if (!L.Browser.mobile) {
+      //     layer.setStyle({ weight: 3, fillOpacity: 0.7 });
+      //   }
+      // },
+      // mouseout: (e) => {
+      //   if (this.highlightedLayer !== layer) {
+      //     this.layerGroup.resetStyle(layer);
+      //   }
+      // },
+    });
+
+    // Tooltip setup
+    // if (feature.properties) {
+    //   const name = feature.properties[this.config.nameProp];
+    //   if (name) {
+    //     layer.bindTooltip(String(name), {
+    //       sticky: true,
+    //       direction: "top",
+    //     });
+    //   }
+    // }
   }
 
   _getHighlightStyle() {
@@ -575,44 +539,12 @@ export default class MapViewer extends HTMLElement {
     });
   }
 
-  /**
-   * Injects feature-label CSS into the Shadow DOM if not already present.
-   */
-  _injectLabelStyles() {
-    if (
-      !this.shadowRoot ||
-      this.shadowRoot.querySelector("style[data-label-style]")
-    ) {
-      return; // avoid duplicates
+  disconnectedCallback() {
+    // Clean up subscription
+    if (this._unsubscribeFilters) {
+      this._unsubscribeFilters();
     }
-
-    const style = document.createElement("style");
-    style.setAttribute("data-label-style", "true"); // mark it
-    style.textContent = `
-    .feature-label span {
-      font: 12px/1.2 system-ui, sans-serif;
-      color: #111;
-      text-shadow: 0 1px 2px rgba(255,255,255,0.9);
-      white-space: nowrap;
-      pointer-events: none;
-      user-select: none;
-    }
-    @media (prefers-color-scheme: dark) {
-      .feature-label span {
-        color: #fff;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-      }
-    }
-  `;
-    this.shadowRoot.appendChild(style);
   }
-
-
-}
-
-// Register (idempotent)
-if (!customElements.get("map-viewer")) {
-  customElements.define("map-viewer", MapViewer);
 }
 
 // Global error handler
@@ -622,3 +554,11 @@ window.addEventListener("error", (e) => {
     document.body.classList.add("components-failed");
   }
 });
+
+if (
+  typeof window !== "undefined" &&
+  window.customElements &&
+  !window.customElements.get("map-viewer")
+) {
+  window.customElements.define("map-viewer", MapViewer);
+}

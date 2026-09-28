@@ -1,11 +1,12 @@
 // index.js
 // Main entry point for GeoExplorer app
 
+console.log("[index.js] GeoExplorer app starting");
+
 import { refs, verifyRefs } from "./ui/dom-refs.js";
 import { extractCounties, buildCountyOptions } from "./helpers/options.js";
 import { updateCountyOptions } from "./app/update-county-options.js";
 import {
-  handleViewChange,
   handleCountyChange,
   handleSubdistChange,
   handleFeaturesLoaded,
@@ -24,24 +25,30 @@ import { generateCountyLayers } from "./app/layer-counties.js";
 import { generateCD118Layers } from "./app/layer-cd118.js";
 import { generateMNPrecinctLayers } from "./app/layer-mn-precincts.js";
 
-import { renderSubdistrictDropdown } from "./app/dropdown-05-subdist.js";
-import { renderCountyDropdown } from "./app/dropdown-04-county.js";
-import { renderFeatureDropdown } from "./app/dropdown-03-feature.js";
-import { renderLayerDropdown } from "./app/dropdown-02-layer.js";
-import { renderViewDropdown } from "./app/dropdown-01-view.js";
+import { renderPrecinctDropdown } from "./app/dropdowns/dropdown-06-precinct.js";
+import { renderSubdistrictDropdown } from "./app/dropdowns/dropdown-05-subdist.js";
+import { renderCountyDropdown } from "./app/dropdowns/dropdown-04-county.js";
+import { renderFeatureDropdown } from "./app/dropdowns/dropdown-03-feature.js";
+import { renderLayerDropdown } from "./app/dropdowns/dropdown-02-layer.js";
+import { renderViewDropdown } from "./app/dropdowns/dropdown-01-view.js";
+import { DropdownManager } from "./app/dropdowns/dropdown-manager.js";
 
 import { featureData } from "./app/store-feature.js";
+import { filterState } from "./app/filters/filter-state.js";
 
 // --- DEFINE CUSTOM ELEMENT AFTER OTHER IMPORTS ---
 import "./app/map-viewer.js";
 
-console.log("GeoExplorer app initialized");
+console.log("[index.js] GeoExplorer app initialized");
 
 // ---------- DATA (populate before render) ----------
 config.groups["us-states"].layers = generateStateLayers();
 config.groups["us-counties"].layers = generateCountyLayers();
 config.groups["us-congress"].layers = generateCD118Layers();
-config.groups["mn-precincts"].layers = generateMNPrecinctLayers();
+
+// Module-scoped state
+let currentRawFeatures = [];
+let dropdownManager = null;
 
 // ---------- LOAD SELECTED LAYER AND RENDER ----------
 export function loadSelectedLayer() {
@@ -53,13 +60,13 @@ export function loadSelectedLayer() {
     "[DEBUG] loadSelectedLayer: view=%s layerKey=%s layer? %s",
     appState.selectedView,
     layerKey,
-    Boolean(layer)
+    Boolean(layer),
   );
 
   if (layer) {
     const mapViewer = document.querySelector("map-viewer");
     mapViewer.loadLayer(layer, { skipFitBounds: false });
-    console.log("[DEBUG] loadSelectedLayer: invoked mapViewer.loadLayer()");
+    console.log("[DEBUG] loadSelectedLayer: invoked mapViewer.loadLayerImpl()");
   } else {
     console.warn("[app.js] No layer to load for current app state.");
   }
@@ -68,16 +75,18 @@ export function loadSelectedLayer() {
 export function render() {
   console.log(
     "[DEBUG] RENDER START. appState:",
-    JSON.parse(JSON.stringify(appState))
+    JSON.parse(JSON.stringify(appState)),
   );
   renderViewDropdown();
   renderLayerDropdown();
   renderFeatureDropdown();
-  renderCountyDropdown();
-  renderSubdistrictDropdown();
+  renderCountyDropdown(currentRawFeatures); // Pass features
+  renderSubdistrictDropdown(currentRawFeatures); // Pass features
+  renderPrecinctDropdown(currentRawFeatures); // Pass features
+
   console.log(
     "[DEBUG] RENDER COMPLETE. appState:",
-    JSON.parse(JSON.stringify(appState))
+    JSON.parse(JSON.stringify(appState)),
   );
 }
 
@@ -99,11 +108,9 @@ document.addEventListener("DOMContentLoaded", function initializeApp() {
     featureContainer: refs.featureContainer(),
     countyContainer: refs.countyContainer(),
     subdistContainer: refs.subdistContainer(),
+    precinctContainer: refs.precinctContainer(),
     countySelect: elements.countySelect,
   };
-
-  // Module-scoped state
-  let currentRawFeatures = [];
 
   // Create dependency bundle for handlers
   const createDependencies = () => ({
@@ -120,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function initializeApp() {
         elements.countySelect,
         raw,
         extractCounties,
-        buildCountyOptions
+        buildCountyOptions,
       ),
   });
 
@@ -134,19 +141,12 @@ document.addEventListener("DOMContentLoaded", function initializeApp() {
       "[DEBUG] INIT: defaults set {view:%s, layer:%s, feature:%s}",
       appState.selectedView,
       appState.selectedLayer,
-      String(appState.selectedFeature)
+      String(appState.selectedFeature),
     );
   }
 
   // Attach event listeners with dependency injection
   function attachEventListeners() {
-    // View change handler
-    elements.viewSelect.addEventListener(
-      "change",
-      function onViewChange(event) {
-        handleViewChange(event.target.value, createDependencies());
-      }
-    );
 
     // County change handler
     if (elements.countySelect) {
@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", function initializeApp() {
         "change",
         function onCountyChange(event) {
           handleCountyChange(event.target.value, createDependencies());
-        }
+        },
       );
     }
 
@@ -167,7 +167,7 @@ document.addEventListener("DOMContentLoaded", function initializeApp() {
             ...createDependencies(),
             countySelect: elements.countySelect,
           });
-        }
+        },
       );
     }
 
@@ -178,16 +178,38 @@ document.addEventListener("DOMContentLoaded", function initializeApp() {
         function onFeaturesLoaded(event) {
           currentRawFeatures = handleFeaturesLoaded(
             event.detail,
-            createDependencies()
+            createDependencies(),
           );
-        }
+
+          // After features load, set initial highlight if we're on states view
+          if (appState.selectedView === "us-states" && appState.selectedLayer) {
+            // Wait a tick for everything to settle
+            setTimeout(() => {
+              const stateName = appState.selectedLayer;
+              if (stateName) {
+                console.log(
+                  "[DEBUG] Setting initial highlight for:",
+                  stateName,
+                );
+                filterState.setHighlight("state", stateName);
+              }
+            }, 100);
+          }
+        },
       );
     }
   }
 
   // Initialize the application
-  function initialize() {
+  async function initialize() {
     initializeState();
+
+    try {
+      config.groups["mn-precincts"].layers = await generateMNPrecinctLayers();
+    } catch (error) {
+      console.error("[MN precincts] Could not load current snapshot:", error);
+    }
+
     render();
     updateControlsVisibility(containers, appState.selectedView);
     requestAnimationFrame(() => loadSelectedLayer());

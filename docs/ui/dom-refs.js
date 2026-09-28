@@ -6,15 +6,17 @@ export const refs = {
   featureSelect: () => document.getElementById("feature-select"),
   countySelect: () => document.getElementById("county-select"),
   subdistSelect: () => document.getElementById("subdist-select"),
-  
+  precinctSelect: () => document.getElementById("precinct-select"),
+
   // Containers
   featureContainer: () => document.getElementById("feature-container"),
   countyContainer: () => document.getElementById("county-container"),
   subdistContainer: () => document.getElementById("subdist-container"),
-  
+  precinctContainer: () => document.getElementById("precinct-container"),
+
   // Map component
   mapViewer: () => document.querySelector("map-viewer"),
-  
+
   // Other controls (if needed)
   layerToggles: () => document.getElementById("layer-toggles"),
   controls: () => document.getElementById("controls")

@@ -1,0 +1,62 @@
+// app/dropdown-03-feature.js
+import { DropdownControlGroup } from "../../components/DropdownControlGroup.js";
+import { appState } from "../../app-state.js";
+import { featureData } from "../store-feature.js";
+import { sortByKey } from "https://civic-interconnect.github.io/app-core/utils/ui-utils.js";
+import { filterState } from "../filters/filter-state.js";
+import { render } from "../../index.js";
+
+
+/**
+ * Renders the Feature selection dropdown.
+ * When the feature changes, it updates the app state,
+ * and triggers a re-render of the UI.
+ * @returns {void}
+ */
+export function renderFeatureDropdown() {
+  const container = document.getElementById("feature-container");
+  if (!container) return;
+
+  // HIDE feature dropdown for MN Precincts view
+  if (appState.selectedView === "mn-precincts") {
+    container.style.display = "none";
+    return;
+  }
+
+  const features = featureData[appState.selectedLayer] || [];
+
+  if (features.length <= 1) {
+    container.style.display = "none";
+    return;
+  }
+
+  const featuresMap = features.map((f) => ({
+    value: f.id,
+    label: f.name,
+  }));
+
+  container.style.display = "flex";
+
+  DropdownControlGroup({
+    selectId: "feature-select",
+    labelText: "Choose Feature",
+    options: sortByKey(featuresMap, "label"),
+    value: appState.selectedFeature,
+    onChange: (newFeature) => {
+      console.log("[dropdown-feature.js] Feature changed:", newFeature);
+      appState.selectedFeature = newFeature;
+
+
+      const viewToType = {
+        "us-states": "state",
+        "us-counties": "county",
+        "us-congress": "cd",
+        "mn-precincts": "precinct",
+      };
+      const type = viewToType[appState.selectedView] || "state";
+      filterState.setHighlight(type, newFeature);
+
+      render();
+    },
+  });
+}

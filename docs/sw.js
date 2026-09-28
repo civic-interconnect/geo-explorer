@@ -1,6 +1,6 @@
 // Service Worker for Geo Explorer Application
 // sw.js
-const CACHE_VERSION = "v0.0.7a";
+const CACHE_VERSION = "v0.0.8";
 const CACHE_NAME = `geo-explorer-cache-${CACHE_VERSION}`;
 const TILE_CACHE = `map-tiles-${CACHE_VERSION}`;
 const DATA_CACHE = `geojson-data-${CACHE_VERSION}`;
@@ -64,8 +64,8 @@ self.addEventListener("activate", (event) => {
                    cacheName.startsWith("geojson-data-");
           })
           .filter(cacheName => {
-            return cacheName !== CACHE_NAME && 
-                   cacheName !== TILE_CACHE && 
+            return cacheName !== CACHE_NAME &&
+                   cacheName !== TILE_CACHE &&
                    cacheName !== DATA_CACHE;
           })
           .map(cacheName => {
@@ -80,7 +80,7 @@ self.addEventListener("activate", (event) => {
 // Fetch event - intelligent routing based on request type
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  
+
   // Handle tile requests - Stale While Revalidate
   if (url.hostname.includes("tile.openstreetmap.org")) {
     event.respondWith(
@@ -95,7 +95,7 @@ self.addEventListener("fetch", (event) => {
               return networkResponse;
             })
             .catch(() => cachedResponse); // Fallback to cache if network fails
-          
+
           // Return cached version immediately, update in background
           return cachedResponse || fetchPromise;
         });
@@ -103,7 +103,7 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
-  
+
   // Handle GeoJSON data - Network First with Cache Fallback
   if (url.pathname.endsWith(".geojson") || url.pathname.includes("/geo-data/")) {
     event.respondWith(
@@ -134,9 +134,9 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
-  
+
   // Handle app assets - Cache First
-  if (url.hostname === location.hostname || 
+  if (url.hostname === location.hostname ||
       url.hostname === "civic-interconnect.github.io" ||
       url.hostname === "unpkg.com") {
     event.respondWith(
@@ -158,7 +158,7 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
-  
+
   // Default - Network only for everything else
   event.respondWith(fetch(event.request));
 });

@@ -11,7 +11,7 @@ export const config = {
         "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us/main/data-out/states",
       idProp: "STATEFP",
       nameProp: "NAME",
-      layers: {}
+      layers: {},
     },
     "us-counties": {
       label: "US Counties",
@@ -21,7 +21,7 @@ export const config = {
         "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us/main/data-out/states",
       idProp: "COUNTYFP",
       nameProp: "NAME",
-      layers: {}
+      layers: {},
     },
     "us-congress": {
       label: "Congressional Districts",
@@ -31,16 +31,18 @@ export const config = {
         "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us-cd118/main/data-out/states",
       idProp: "CD118FP",
       nameProp: "NAMELSAD20",
-      layers: {}
+      layers: {},
     },
     "mn-precincts": {
       label: "MN Precincts",
-      idProp: "precinct_id",    
+      baseUrl:
+        "https://raw.githubusercontent.com/civic-interconnect/civic-data-boundaries-us-mn-precincts/main/data-out/states/minnesota",
+      idProp: "precinct_id",
       nameProp: "precinct_name",
       filterCountyProp: "county",
       filterSubdistProp: "mn_house",
       style: { color: "#0b79d0" },
-      layers: {}
-    }
+      layers: {},
+    },
   },
 };

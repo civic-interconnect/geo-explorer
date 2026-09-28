@@ -70,6 +70,7 @@
         <main id="main-content">
             <section id="controls" role="group" aria-label="Map controls">
 
+                <!-- Dropdown 1 View (dataset, e.g. US States) -->
                 <div class="control-group">
                     <label for="view-select" id="view-label">Choose Dataset</label>
                     <select id="view-select">
@@ -77,12 +78,21 @@
                     </select>
                 </div>
 
+                <!-- Dropdown 2 Layer (e.g. State, County) -->
                 <div class="control-group">
                     <label for="layer-select" id="layer-label">Choose State</label>
                     <select id="layer-select"></select>
                 </div>
 
-                <!-- County (only shown for MN Precincts view) -->
+                <!-- Dropdown 3 Feature (varies) -->
+                <div id="feature-container" class="control-group" style="display: none;">
+                    <label for="feature-select" id="feature-label">Choose Feature</label>
+                    <select id="feature-select">
+                        <option disabled selected>[ Select a Feature ]</option>
+                    </select>
+                </div>
+
+                <!-- Dropdown 4 County (only shown for MN Precincts view) -->
                 <div id="county-container" class="control-group" style="display: none;">
                     <label for="county-select" id="county-label">Choose County</label>
                     <select id="county-select">
@@ -90,7 +100,7 @@
                     </select>
                 </div>
 
-                <!-- Sub-district (e.g. 03A / 03B) -->
+                <!-- Dropdown 5 Sub-district (e.g. 03A / 03B) -->
                 <div id="subdist-container" class="control-group" style="display: none;">
                     <label for="subdist-select" id="subdist-label">Choose Sub-district</label>
                     <select id="subdist-select">
@@ -100,10 +110,11 @@
                     </select>
                 </div>
 
-                <div id="feature-container" class="control-group" style="display: none;">
-                    <label for="feature-select" id="feature-label">Choose Feature</label>
-                    <select id="feature-select">
-                        <option disabled selected>[ Select a Feature ]</option>
+                <!-- Dropdown 6 Precinct (only shown for MN Precincts view) -->
+                <div id="precinct-container" class="control-group" style="display: none;">
+                    <label for="precinct-select" id="precinct-label">Choose Precinct</label>
+                    <select id="precinct-select">
+                        <option disabled selected>[ Select a Precinct ]</option>
                     </select>
                 </div>
 

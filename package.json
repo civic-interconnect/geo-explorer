@@ -1,5 +1,17 @@
 {
+  "name": "geo-explorer",
+  "version": "0.1.0",
+  "description": "GeoExplorer for Civic Interconnect projects",
+  "type": "module",
   "devDependencies": {
-    "eslint": "^9.39.0"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "knip": "^6.38.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lint-fix": "eslint . --fix",
+    "find-unused": "knip"
   }
 }
